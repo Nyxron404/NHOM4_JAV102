@@ -27,6 +27,7 @@ public class AuditLog {
     private OffsetDateTime createdAt;
 
     public AuditLog() {}
+    
 
     public Long getAuditId() { return auditId; }
     public void setAuditId(Long auditId) { this.auditId = auditId; }
