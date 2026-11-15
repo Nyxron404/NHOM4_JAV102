@@ -1,4 +1,4 @@
-package com.coffeeshop.model.inventory;
+package models.hieulnmth08470;
 
 /**
  * Lý do xuất hủy (hết hạn, hỏng bao bì...)

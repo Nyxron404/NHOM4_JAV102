@@ -1,4 +1,4 @@
-package com.coffeeshop.model.view;
+package models.hieulnmth08470;
 
 /**
  * Tồn theo gói bán + cờ tồn thấp (dữ liệu dẫn xuất, không INSERT/UPDATE)

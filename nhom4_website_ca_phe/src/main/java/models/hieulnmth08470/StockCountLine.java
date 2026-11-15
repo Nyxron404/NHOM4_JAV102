@@ -1,4 +1,4 @@
-package com.coffeeshop.model.inventory;
+package models.hieulnmth08470;
 
 /**
  * Chi tiết kiểm kê theo lô

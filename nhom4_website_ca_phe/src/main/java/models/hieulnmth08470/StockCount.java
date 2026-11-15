@@ -1,7 +1,7 @@
-package com.coffeeshop.model.inventory;
+package models.hieulnmth08470;
 
-import com.coffeeshop.model.enums.StockCountStatus;
-import com.coffeeshop.model.enums.StockCountType;
+import models.enums.StockCountStatus;
+import models.enums.StockCountType;
 import java.time.OffsetDateTime;
 
 /**

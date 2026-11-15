@@ -1,6 +1,6 @@
-package com.coffeeshop.model.inventory;
+package models.hieulnmth08470;
 
-import com.coffeeshop.model.enums.MovementType;
+import models.enums.MovementType;
 import java.time.OffsetDateTime;
 
 /**

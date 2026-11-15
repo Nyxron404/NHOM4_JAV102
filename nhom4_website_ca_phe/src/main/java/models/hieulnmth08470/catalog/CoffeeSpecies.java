@@ -1,4 +1,4 @@
-package com.coffeeshop.model.catalog;
+package models.hieulnmth08470.catalog;
 
 /**
  * Loài cà phê (Arabica, Robusta, Liberica, Excelsa)

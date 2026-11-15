@@ -1,4 +1,4 @@
-package com.coffeeshop.model.catalog;
+package models.hieulnmth08470.catalog;
 
 /**
  * Độ xay / dạng sản phẩm (gồm cả Nguyên hạt)
