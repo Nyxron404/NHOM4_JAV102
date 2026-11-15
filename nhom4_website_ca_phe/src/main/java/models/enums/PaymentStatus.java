@@ -1,4 +1,4 @@
-package models.enums;
+package com.coffeeshop.model.enums;
 
 /** Trạng thái giao dịch thanh toán. Tên hằng trùng đúng giá trị lưu trong DB. */
 public enum PaymentStatus {

@@ -1,4 +1,4 @@
-package models.enums;
+package com.coffeeshop.model.enums;
 
 /** Trạng thái dùng chung: sản phẩm, gói bán, nhà cung cấp. Tên hằng trùng đúng giá trị lưu trong DB. */
 public enum ActiveStatus {

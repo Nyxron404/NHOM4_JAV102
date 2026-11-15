@@ -1,4 +1,4 @@
-package models.enums;
+package com.coffeeshop.model.enums;
 
 /** Trạng thái hóa đơn nhập. Tên hằng trùng đúng giá trị lưu trong DB. */
 public enum PurchaseInvoiceStatus {
