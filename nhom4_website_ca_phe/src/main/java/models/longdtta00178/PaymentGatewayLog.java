@@ -1,6 +1,6 @@
-package com.coffeeshop.model.sales;
+package models.longdtta00178;
 
-import com.coffeeshop.model.enums.GatewayLogSource;
+import models.enums.GatewayLogSource;
 import java.time.OffsetDateTime;
 
 /**

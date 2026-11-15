@@ -1,4 +1,4 @@
-package com.coffeeshop.model.sales;
+package models.longdtta00178;
 
 /**
  * Phương thức thanh toán (Tiền mặt, VNPay...)

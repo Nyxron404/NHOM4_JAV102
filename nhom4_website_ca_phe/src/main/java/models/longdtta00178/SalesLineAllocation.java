@@ -1,4 +1,4 @@
-package com.coffeeshop.model.sales;
+package models.longdtta00178;
 
 /**
  * Chi tiết trừ kho: dòng bán lấy từ lô nào (FEFO)

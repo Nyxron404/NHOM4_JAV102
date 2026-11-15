@@ -1,6 +1,6 @@
-package com.coffeeshop.model.sales;
+package models.longdtta00178;
 
-import com.coffeeshop.model.enums.SalesInvoiceStatus;
+import models.enums.SalesInvoiceStatus;
 import java.time.OffsetDateTime;
 
 /**
