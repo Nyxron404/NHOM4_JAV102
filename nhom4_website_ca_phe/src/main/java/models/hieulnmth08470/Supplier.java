@@ -1,6 +1,6 @@
-package com.coffeeshop.model.purchase;
+package models.hieulnmth08470;
 
-import com.coffeeshop.model.enums.ActiveStatus;
+import models.enums.ActiveStatus;
 
 /**
  * Nhà cung cấp
