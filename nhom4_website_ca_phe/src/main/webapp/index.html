@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/index.css">
+    <link rel="stylesheet" href="assets/css/shared.css">
+    <title>Trang chủ - Quản lý bán hàng</title>
+</head>
+<body on>
+    <div id="header"></div>
+    <!-- NỘI DUNG CHÍNH -->
+    <div class="main">
+        <div class="title">
+            <h1>Hệ thống quản lý bán hàng</h1>
+        </div>
+        
+        <div class="menu-grid">
+            <a href="pages/longdtta00178.html" class="card">
+                <div class="card-icon">☕</div>
+                <div class="card-title">Bán hàng</div>
+                <div class="card-desc">Tạo đơn &amp; tính tiền tại quầy</div>
+            </a>
+
+            <a href="hoa-don.html" class="card">
+                <div class="card-icon">🧾</div>
+                <div class="card-title">Hóa đơn</div>
+                <div class="card-desc">Lịch sử &amp; in lại hóa đơn</div>
+            </a>
+
+            <a href="kho-hang.html" class="card">
+                <div class="card-icon">📦</div>
+                <div class="card-title">Kho hàng</div>
+                <div class="card-desc">Nguyên liệu &amp; nhập/xuất kho</div>
+            </a>
+
+            <a href="thuc-don.html" class="card">
+                <div class="card-icon">📋</div>
+                <div class="card-title">Thực đơn</div>
+                <div class="card-desc">Quản lý món &amp; giá bán</div>
+            </a>
+
+            <a href="nhan-vien.html" class="card">
+                <div class="card-icon">👥</div>
+                <div class="card-title">Nhân viên</div>
+                <div class="card-desc">Phân ca &amp; quyền truy cập</div>
+            </a>
+
+            <a href="thong-ke.html" class="card">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Thống kê</div>
+                <div class="card-desc">Doanh thu ngày &amp; món bán chạy</div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Bấm vào "Tài khoản" để mở/đóng menu
+        function toggleMenu() {
+            document.getElementById("accountMenu").classList.toggle("show");
+        }
+
+        // Bấm ra ngoài thì đóng menu
+        window.onclick = function (e) {
+            if (!e.target.closest(".account")) {
+                document.getElementById("accountMenu").classList.remove("show");
+            }
+        };
+        
+    </script>
+    <script src="./assets/js/shared.js"></script>
+
+</body>
+</html>
