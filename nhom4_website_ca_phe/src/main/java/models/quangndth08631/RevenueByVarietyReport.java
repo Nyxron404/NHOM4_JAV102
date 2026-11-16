@@ -1,0 +1,32 @@
+package models.quangndth08631;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+/** Doanh thu đã thanh toán theo giống cà phê. */
+public class RevenueByVarietyReport {
+
+    private static final String SQL = """
+            SELECT cv.variety_id, cv.variety_name, cs.species_name,
+                   SUM(sil.quantity * sil.unit_price) AS revenue,
+                   SUM(sil.quantity) AS quantity_sold
+            FROM sales_invoice_lines sil
+            JOIN sales_invoices si ON si.sales_invoice_id = sil.sales_invoice_id
+            JOIN packages pa ON pa.package_id = sil.package_id
+            JOIN product_variants pv ON pv.variant_id = pa.variant_id
+            JOIN coffee_varieties cv ON cv.variety_id = pv.variety_id
+            JOIN coffee_species cs ON cs.species_id = cv.species_id
+            WHERE si.status = 'PAID'
+              AND (si.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN ? AND ?
+            GROUP BY cv.variety_id, cv.variety_name, cs.species_name
+            ORDER BY revenue DESC
+            """;
+
+    public List<Map<String, Object>> get(Connection connection, LocalDate from, LocalDate to)
+            throws SQLException {
+        return JdbcReportQuery.query(connection, SQL, from, to);
+    }
+}
