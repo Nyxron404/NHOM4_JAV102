@@ -1,4 +1,4 @@
-package com.coffeeshop.model.auth;
+package models.auth;
 
 /**
  * Vai trò (CCH, NV quầy...)

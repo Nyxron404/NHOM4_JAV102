@@ -1,6 +1,6 @@
-package com.coffeeshop.model.view;
+package models.view;
 
-import com.coffeeshop.model.enums.PurchaseInvoiceStatus;
+import models.enums.PurchaseInvoiceStatus;
 import java.math.BigDecimal;
 
 /**

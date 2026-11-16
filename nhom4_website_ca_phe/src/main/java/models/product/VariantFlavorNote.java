@@ -1,4 +1,4 @@
-package com.coffeeshop.model.product;
+package models.product;
 
 /**
  * Nốt hương của biến thể (N-N)

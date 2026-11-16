@@ -1,4 +1,4 @@
-package com.coffeeshop.model.product;
+package models.product;
 
 /**
  * Ảnh biến thể (thuộc tính đa trị)

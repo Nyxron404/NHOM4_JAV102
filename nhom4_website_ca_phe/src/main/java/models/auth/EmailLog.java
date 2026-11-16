@@ -1,6 +1,6 @@
-package com.coffeeshop.model.auth;
+package models.auth;
 
-import com.coffeeshop.model.enums.EmailStatus;
+import models.enums.EmailStatus;
 import java.time.OffsetDateTime;
 
 /**

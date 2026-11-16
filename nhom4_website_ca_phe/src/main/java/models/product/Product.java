@@ -1,6 +1,6 @@
-package com.coffeeshop.model.product;
+package models.product;
 
-import com.coffeeshop.model.enums.ActiveStatus;
+import models.enums.ActiveStatus;
 import java.time.OffsetDateTime;
 
 /**

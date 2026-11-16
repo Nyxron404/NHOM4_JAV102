@@ -1,4 +1,4 @@
-package com.coffeeshop.model.purchase;
+package models.purchase;
 
 /**
  * Ánh xạ mã hàng NCC -> gói bán (nhớ cho lần nhập sau)

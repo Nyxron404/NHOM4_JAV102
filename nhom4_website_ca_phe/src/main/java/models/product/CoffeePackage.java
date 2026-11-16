@@ -1,6 +1,6 @@
-package com.coffeeshop.model.product;
+package models.product;
 
-import com.coffeeshop.model.enums.ActiveStatus;
+import models.enums.ActiveStatus;
 
 /**
  * Gói bán (SKU): biến thể + trọng lượng + dạng hạt

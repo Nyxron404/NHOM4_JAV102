@@ -1,7 +1,7 @@
-package com.coffeeshop.model.purchase;
+package models.purchase;
 
-import com.coffeeshop.model.enums.InputMethod;
-import com.coffeeshop.model.enums.PurchaseInvoiceStatus;
+import models.enums.InputMethod;
+import models.enums.PurchaseInvoiceStatus;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 

@@ -1,4 +1,4 @@
-package com.coffeeshop.model.purchase;
+package models.purchase;
 
 import java.time.LocalDate;
 

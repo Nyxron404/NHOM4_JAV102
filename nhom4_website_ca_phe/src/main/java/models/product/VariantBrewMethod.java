@@ -1,4 +1,4 @@
-package com.coffeeshop.model.product;
+package models.product;
 
 /**
  * Gợi ý pha cho biến thể (N-N)

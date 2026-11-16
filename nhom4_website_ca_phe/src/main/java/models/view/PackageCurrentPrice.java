@@ -1,4 +1,4 @@
-package com.coffeeshop.model.view;
+package models.view;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
