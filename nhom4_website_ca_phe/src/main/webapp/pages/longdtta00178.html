@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../assets/css/shared.css" />
+    <link rel="stylesheet" href="../assets/css/longdtta00178.css" />
+    <title>Bán hàng</title>
+  </head>
+  <body>
+    <div id="header"></div>
+    <!-- Thêm vào <head>: <link rel="stylesheet" href="assets/css/ban-hang.css"> -->
+    <div id="home"></div>
+    <div class="pos">
+      <!-- ========== 1. DANH SÁCH SẢN PHẨM (65%) ========== -->
+      <div class="products">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Tìm tên hạt, mã vạch..." />
+        </div>
+
+        <div class="filters">
+          <a href="#" class="filter active">Tất cả</a>
+          <a href="#" class="filter">Nguyên hạt</a>
+          <a href="#" class="filter">Xay sẵn</a>
+          <a href="#" class="filter">Arabica</a>
+          <a href="#" class="filter">Robusta</a>
+        </div>
+
+        <div class="product-grid">
+          <div class="product-card">
+            <button class="add-btn" title="Thêm vào đơn">+</button>
+            <img
+              src="assets/images/robusta-honey.jpg"
+              alt="Robusta Honey"
+              class="product-img"
+            />
+            <h3 class="product-name">Robusta Honey</h3>
+            <p class="product-info">Rang vừa • Còn: 24 túi</p>
+            <div class="sizes">
+              <button class="size active">250g</button>
+              <button class="size">500g</button>
+              <button class="size">1kg</button>
+            </div>
+            <p class="product-price">120.000đ</p>
+          </div>
+
+          <div class="product-card">
+            <button class="add-btn" title="Thêm vào đơn">+</button>
+            <img
+              src="assets/images/arabica-cau-dat.jpg"
+              alt="Arabica Cầu Đất"
+              class="product-img"
+            />
+            <h3 class="product-name">Arabica Cầu Đất</h3>
+            <p class="product-info">Rang mộc • Còn: 12 túi</p>
+            <div class="sizes">
+              <button class="size active">250g</button>
+              <button class="size">500g</button>
+              <button class="size">1kg</button>
+            </div>
+            <p class="product-price">165.000đ</p>
+          </div>
+
+          <div class="product-card">
+            <button class="add-btn" title="Thêm vào đơn">+</button>
+            <img
+              src="assets/images/house-blend.jpg"
+              alt="House Blend Đậm Vị"
+              class="product-img"
+            />
+            <h3 class="product-name">House Blend Đậm Vị</h3>
+            <p class="product-info">Rang đậm • Còn: 40 túi</p>
+            <div class="sizes">
+              <button class="size active">250g</button>
+              <button class="size">500g</button>
+              <button class="size">1kg</button>
+            </div>
+            <p class="product-price">110.000đ</p>
+          </div>
+
+          <div class="product-card">
+            <button class="add-btn" title="Thêm vào đơn">+</button>
+            <img
+              src="assets/images/culi-tay-nguyen.jpg"
+              alt="Culi Tây Nguyên"
+              class="product-img"
+            />
+            <h3 class="product-name">Culi Tây Nguyên</h3>
+            <p class="product-info low-stock">Rang đậm • Còn: 8 túi</p>
+            <div class="sizes">
+              <button class="size active">250g</button>
+              <button class="size">500g</button>
+              <button class="size">1kg</button>
+            </div>
+            <p class="product-price">130.000đ</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 2. HÓA ĐƠN BÁN LẺ (35%) ========== -->
+      <div class="invoice">
+        <div class="invoice-head">
+          <h2>Đơn #HD024</h2>
+          <select class="customer">
+            <option>Khách lẻ</option>
+            <option>Khách thành viên</option>
+          </select>
+        </div>
+
+        <div class="order-list">
+          <div class="order-item">
+            <div class="item-top">
+              <span class="item-name">Robusta Honey (500g)</span>
+              <button class="remove-btn" title="Xóa">✕</button>
+            </div>
+            <div class="item-bottom">
+              <span class="item-type">Hạt</span>
+              <div class="qty">
+                <button>−</button>
+                <span>2</span>
+                <button>+</button>
+              </div>
+              <span class="item-price">240.000đ</span>
+            </div>
+          </div>
+
+          <div class="order-item">
+            <div class="item-top">
+              <span class="item-name">Arabica Cầu Đất (250g)</span>
+              <button class="remove-btn" title="Xóa">✕</button>
+            </div>
+            <div class="item-bottom">
+              <span class="item-type">Xay</span>
+              <div class="qty">
+                <button>−</button>
+                <span>1</span>
+                <button>+</button>
+              </div>
+              <span class="item-price">165.000đ</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="summary-row">
+            <span>Tạm tính:</span>
+            <span>405.000đ</span>
+          </div>
+          <div class="summary-row">
+            <span>Giảm giá:</span>
+            <span>0đ</span>
+          </div>
+          <div class="summary-row total">
+            <span>TỔNG CỘNG:</span>
+            <span>405.000đ</span>
+          </div>
+        </div>
+
+        <div class="payment">
+          <button class="pay-method active">💵 Tiền mặt</button>
+          <button class="pay-method">🏦 Chuyển khoản</button>
+        </div>
+
+        <button class="checkout-btn">THANH TOÁN &amp; IN BILL</button>
+      </div>
+    </div>
+    <script src="../assets/js/shared.js"></script>
+    <script src="../assets/js/longdtta00178.js"></script>
+  </body>
+</html>

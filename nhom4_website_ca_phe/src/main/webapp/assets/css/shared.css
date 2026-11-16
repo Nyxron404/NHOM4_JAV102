@@ -199,3 +199,24 @@ a {
   transform: scale(1.7);    /* Phóng to nhân vật lên 1.7 lần mà không làm phình header */
   transform-origin: center; /* Phóng to từ tâm (hoặc đổi thành 'top center' nếu muốn chân thò xuống dưới header) */
 }
+
+/* ===== NÚT VỀ TRANG CHỦ ===== */
+.home-bar {
+    padding: 15px 20px 0 20px;
+}
+
+.home-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #FFFFFF;
+    border: 1px solid #EAE2D6;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #8B5A2B;
+}
+
+.home-btn:hover {
+    border-color: #D97706;
+    color: #D97706;
+}

@@ -44,3 +44,11 @@ function renderHeader() {
     document.getElementById("header").innerHTML = header;
 }
 renderHeader();
+function renderHome() {
+    const home = `<!-- Nút về trang chủ -->
+      <div class="home-bar">
+        <a href="../index.html" class="home-btn">🏠 Trang chủ</a>
+      </div>`
+      document.getElementById("home").innerHTML = home;
+}
+renderHome();
