@@ -229,166 +229,41 @@
             <div class="panel filter-box">
               <div class="search-box">
                 <span>🔍</span>
-                <input type="text" placeholder="Tìm tên cà phê hoặc mã SKU (VD: culi, FR-CULI)" />
+                <input type="text" id="searchInput" placeholder="Tìm tên cà phê hoặc mã SKU (VD: culi, FR-CULI)" />
               </div>
 
-              <div class="filter-row">
+              <!-- Chip loài: JS đổ từ coffee_species -->
+              <div class="filter-row" id="speciesChips">
                 <span class="filter-label">Loài</span>
-                <a href="#ban-hang" class="chip active">Tất cả</a>
-                <a href="#ban-hang" class="chip">Arabica</a>
-                <a href="#ban-hang" class="chip">Robusta</a>
-                <a href="#ban-hang" class="chip">Liberica</a>
+                <a href="#ban-hang" class="chip active" data-species="">Tất cả</a>
               </div>
-              <div class="filter-row">
+              <div class="filter-row" id="formChips">
                 <span class="filter-label">Dạng</span>
-                <a href="#ban-hang" class="chip active">Tất cả</a>
-                <a href="#ban-hang" class="chip">Nguyên hạt</a>
-                <a href="#ban-hang" class="chip">Xay sẵn</a>
+                <a href="#ban-hang" class="chip active" data-form="">Tất cả</a>
+                <a href="#ban-hang" class="chip" data-form="WB">Nguyên hạt</a>
+                <a href="#ban-hang" class="chip" data-form="GROUND">Xay sẵn</a>
               </div>
               <div class="filter-row">
                 <span class="filter-label">Lọc thêm</span>
-                <!-- nguồn: growing_regions -->
-                <select>
-                  <option>Mọi vùng trồng</option>
-                  <option>Cầu Đất</option>
-                  <option>Khe Sanh</option>
-                  <option>Buôn Ma Thuột</option>
+                <!-- JS đổ từ growing_regions / roast_levels -->
+                <select id="regionSelect">
+                  <option value="">Mọi vùng trồng</option>
                 </select>
-                <!-- nguồn: roast_levels (theo sort_order) -->
-                <select>
-                  <option>Mọi mức rang</option>
-                  <option>Rang sáng</option>
-                  <option>Rang vừa</option>
-                  <option>Rang vừa đậm</option>
-                  <option>Rang đậm</option>
+                <select id="roastSelect">
+                  <option value="">Mọi mức rang</option>
                 </select>
-                <label class="check"><input type="checkbox" /> Chỉ hiện gói còn hàng</label>
+                <label class="check"><input type="checkbox" id="inStockCheck" /> Chỉ hiện gói còn hàng</label>
               </div>
             </div>
 
             <div class="list-head">
-              <span><b>3</b> loại cà phê · 12 gói bán</span>
+              <span id="productCount"></span>
               <span class="muted">Tồn = số túi còn hạn bán được</span>
             </div>
 
-            <!-- Mỗi thẻ = 1 biến thể ACTIVE (product_variants + variant_images);
-                 mỗi dòng trong thẻ = 1 gói ACTIVE (packages + v_package_current_price + tồn còn hạn [136]).
-                 Gói hết hàng / chưa có giá: thêm class "pkg-off", khóa nút +. Tồn <= min_stock_level: class "pkg-low".
-                 Dữ liệu cứng chỉ giữ 3 thẻ mẫu: Liberica (gói chưa có giá), Robusta Honey (lô cận hạn), Culi (tồn thấp). -->
-            <div class="grid">
-          <div class="card">
-            <div class="card-top">
-              <img class="card-img" src="https://images.unsplash.com/photo-1762264498959-e1b548ecb239?w=300&h=300&fit=crop&q=80&auto=format" alt="Liberica Khe Sanh" />
-              <div class="card-info">
-                <div class="card-line">Cà phê Khe Sanh</div>
-                <div class="card-name">Liberica Khe Sanh</div>
-                <div class="card-meta"><span class="badge badge-liberica">Liberica</span> Khe Sanh · Natural · Rang vừa đậm</div>
-                <div class="card-notes"><span class="note">Mít chín</span><span class="note">Quế</span></div>
-              </div>
-            </div>
-            <div class="pkg-list">
-              <div class="pkg">
-                <div class="pkg-name">250g · Nguyên hạt<div class="pkg-sku">KS-LIBERICA-NT-250-WB</div></div>
-                <div class="pkg-price">140.000đ</div>
-                <div class="pkg-stock">Còn 24</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg">
-                <div class="pkg-name">500g · Nguyên hạt<div class="pkg-sku">KS-LIBERICA-NT-500-WB</div></div>
-                <div class="pkg-price">266.000đ</div>
-                <div class="pkg-stock">Còn 12</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg pkg-off">
-                <div class="pkg-name">1kg · Nguyên hạt<div class="pkg-sku">KS-LIBERICA-NT-1000-WB</div></div>
-                <div class="pkg-price">—</div>
-                <div class="pkg-stock">Chưa có giá</div>
-                <button class="pkg-add" disabled>+</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-top">
-              <img class="card-img" src="https://images.unsplash.com/photo-1663123459145-792ecee0fc23?w=300&h=300&fit=crop&q=80&auto=format" alt="Robusta Honey" />
-              <div class="card-info">
-                <div class="card-line">Fine Robusta Tây Nguyên</div>
-                <div class="card-name">Robusta Honey</div>
-                <div class="card-meta"><span class="badge badge-robusta">Robusta</span> Cư M'gar · Honey · Rang vừa</div>
-                <div class="card-notes"><span class="note">Nho khô</span><span class="note">Socola đen</span></div>
-              </div>
-            </div>
-            <div class="pkg-list">
-              <div class="pkg">
-                <div class="pkg-name">250g · Nguyên hạt <span class="tag-near" title="Có lô sắp hết hạn, hệ thống sẽ trừ lô này trước">Lô cận hạn</span><div class="pkg-sku">FR-CUMGAR-HN-250-WB</div></div>
-                <div class="pkg-price">120.000đ</div>
-                <div class="pkg-stock">Còn 28</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg">
-                <div class="pkg-name">500g · Nguyên hạt<div class="pkg-sku">FR-CUMGAR-HN-500-WB</div></div>
-                <div class="pkg-price">228.000đ</div>
-                <div class="pkg-stock">Còn 12</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg">
-                <div class="pkg-name">1kg · Nguyên hạt<div class="pkg-sku">FR-CUMGAR-HN-1000-WB</div></div>
-                <div class="pkg-price">432.000đ</div>
-                <div class="pkg-stock">Còn 6</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg">
-                <div class="pkg-name">250g · Xay phin<div class="pkg-sku">FR-CUMGAR-HN-250-PH</div></div>
-                <div class="pkg-price">120.000đ</div>
-                <div class="pkg-stock">Còn 18</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-top">
-              <img class="card-img" src="https://images.unsplash.com/photo-1698061700649-4c6425ebdbec?w=300&h=300&fit=crop&q=80&auto=format" alt="Culi Tây Nguyên" />
-              <div class="card-info">
-                <div class="card-line">Fine Robusta Tây Nguyên</div>
-                <div class="card-name">Culi Tây Nguyên</div>
-                <div class="card-meta"><span class="badge badge-robusta">Robusta</span> Buôn Ma Thuột · Natural · Rang đậm</div>
-                <div class="card-notes"><span class="note">Socola đen</span><span class="note">Ca cao</span></div>
-              </div>
-            </div>
-            <div class="pkg-list">
-              <div class="pkg pkg-low">
-                <div class="pkg-name">250g · Nguyên hạt<div class="pkg-sku">FR-CULI-BMT-250-WB</div></div>
-                <div class="pkg-price">130.000đ</div>
-                <div class="pkg-stock">Sắp hết · 4</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg">
-                <div class="pkg-name">500g · Nguyên hạt<div class="pkg-sku">FR-CULI-BMT-500-WB</div></div>
-                <div class="pkg-price">247.000đ</div>
-                <div class="pkg-stock">Còn 12</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg">
-                <div class="pkg-name">1kg · Nguyên hạt<div class="pkg-sku">FR-CULI-BMT-1000-WB</div></div>
-                <div class="pkg-price">468.000đ</div>
-                <div class="pkg-stock">Còn 6</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg">
-                <div class="pkg-name">250g · Xay phin<div class="pkg-sku">FR-CULI-BMT-250-PH</div></div>
-                <div class="pkg-price">130.000đ</div>
-                <div class="pkg-stock">Còn 18</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-              <div class="pkg">
-                <div class="pkg-name">500g · Xay phin<div class="pkg-sku">FR-CULI-BMT-500-PH</div></div>
-                <div class="pkg-price">247.000đ</div>
-                <div class="pkg-stock">Còn 10</div>
-                <button class="pkg-add" title="Thêm vào đơn">+</button>
-              </div>
-            </div>
-          </div>
+            <!-- Thẻ cà phê: longdtta00178.js gọi ../api/ban-hang/san-pham rồi vẽ vào đây -->
+            <div class="grid" id="productGrid">
+              <div class="empty">Đang tải sản phẩm…</div>
             </div>
           </div>
 
@@ -619,6 +494,6 @@
     </div>
 
     <script src="../assets/js/shared.js"></script>
-    <script src="../assets/js/longdtta00178.js"></script>
+    <script src="../assets/js/longdtta00178.js" ></script>
   </body>
 </html>

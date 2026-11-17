@@ -431,6 +431,22 @@ select:focus {
     color: #5C4A3D;
 }
 
+/* Thông báo trong lưới (đang tải / không có kết quả / lỗi) */
+.empty {
+    grid-column: 1 / -1;
+    padding: 40px 20px;
+    text-align: center;
+    color: #8C7B6E;
+    background-color: #FFFFFF;
+    border: 1px dashed #EAE2D6;
+    border-radius: 12px;
+}
+
+.empty-error {
+    color: #B42318;
+    border-color: #F1B9B3;
+}
+
 /* Dòng gói bán trong thẻ */
 .pkg-list {
     border-top: 1px dashed #EAE2D6;
@@ -454,13 +470,13 @@ select:focus {
     min-width: 0;
     font-size: 13px;
     font-weight: bold;
-    white-space: nowrap;
 }
 
 .pkg-sku {
     font-size: 11px;
     font-weight: normal;
     color: #A89A8E;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
