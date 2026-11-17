@@ -19,6 +19,11 @@ public class PackagePriceHistory {
     private Integer changedBy;
     private String note;
 
+    // Thông tin hiển thị (JOIN, không lưu DB)
+    private String changedByName;
+    private Boolean applied;
+    private Boolean current;
+
     public PackagePriceHistory() {}
 
     public Long getPriceHistoryId() { return priceHistoryId; }
@@ -33,6 +38,12 @@ public class PackagePriceHistory {
     public void setChangedBy(Integer changedBy) { this.changedBy = changedBy; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
+    public String getChangedByName() { return changedByName; }
+    public void setChangedByName(String changedByName) { this.changedByName = changedByName; }
+    public Boolean getApplied() { return applied; }
+    public void setApplied(Boolean applied) { this.applied = applied; }
+    public Boolean getCurrent() { return current; }
+    public void setCurrent(Boolean current) { this.current = current; }
 
     @Override
     public String toString() {

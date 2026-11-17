@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/minhpvth08530.css">
+    <title>Quản lý sản phẩm - Quản lý bán hàng</title>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="home"></div>
+
+    <main class="pm">
+        <div class="pm-top">
+            <div>
+                <h1>Quản lý sản phẩm</h1>
+                <p class="pm-sub">Sản phẩm, biến thể, hồ sơ hương vị, ảnh, gói bán và giá bán</p>
+            </div>
+            <button class="btn btn-primary" id="btnAddProduct">+ Thêm sản phẩm</button>
+        </div>
+
+        <div class="pm-layout">
+            <!-- Cột trái: danh sách sản phẩm -->
+            <aside class="panel pm-side">
+                <div class="search-box">
+                    <span class="search-icon">⌕</span>
+                    <input type="search" id="searchInput" autocomplete="off"
+                           placeholder="Tìm tên hoặc mã (không dấu)">
+                </div>
+                <div class="seg" id="productStatusFilter">
+                    <button type="button" class="active" data-status="">Tất cả</button>
+                    <button type="button" data-status="ACTIVE">Đang bán</button>
+                    <button type="button" data-status="INACTIVE">Ngừng KD</button>
+                </div>
+                <div class="list-meta" id="productCount"></div>
+                <div id="productList" class="product-list"></div>
+            </aside>
+
+            <!-- Cột phải: chi tiết sản phẩm, biến thể, gói bán -->
+            <section class="pm-main" id="mainPanel"></section>
+        </div>
+    </main>
+
+    <div id="modalRoot"></div>
+    <div id="toastRoot" class="toast-root"></div>
+
+    <script>
+        // Bấm vào "Tài khoản" để mở/đóng menu (header chung)
+        function toggleMenu() {
+            document.getElementById("accountMenu").classList.toggle("show");
+        }
+        window.addEventListener("click", function (e) {
+            const menu = document.getElementById("accountMenu");
+            if (menu && !e.target.closest(".account")) {
+                menu.classList.remove("show");
+            }
+        });
+    </script>
+    <script src="../assets/js/shared.js"></script>
+    <script src="../assets/js/minhpvth08530.js"></script>
+</body>
+</html>
