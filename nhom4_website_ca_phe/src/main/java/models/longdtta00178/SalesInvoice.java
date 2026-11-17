@@ -1,7 +1,8 @@
 package models.longdtta00178;
 
-import models.enums.SalesInvoiceStatus;
 import java.time.OffsetDateTime;
+
+import models.enums.SalesInvoiceStatus;
 
 /**
  * Hóa đơn bán tại quầy

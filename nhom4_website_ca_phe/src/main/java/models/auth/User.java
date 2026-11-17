@@ -1,7 +1,8 @@
 package models.auth;
 
-import models.enums.UserStatus;
 import java.time.OffsetDateTime;
+
+import models.enums.UserStatus;
 
 /**
  * Người dùng: chủ cửa hàng + tài khoản quầy dùng chung

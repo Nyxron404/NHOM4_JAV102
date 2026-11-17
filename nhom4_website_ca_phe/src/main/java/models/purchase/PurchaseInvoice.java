@@ -1,9 +1,10 @@
 package models.purchase;
 
-import models.enums.InputMethod;
-import models.enums.PurchaseInvoiceStatus;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+
+import models.enums.InputMethod;
+import models.enums.PurchaseInvoiceStatus;
 
 /**
  * Hóa đơn nhập (QR / mã tra cứu / nhập tay)

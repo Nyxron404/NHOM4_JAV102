@@ -1,8 +1,9 @@
 package models.view;
 
-import models.enums.PurchaseInvoiceStatus;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+
+import models.enums.PurchaseInvoiceStatus;
 
 /**
  * Tổng tiền hóa đơn nhập (dữ liệu dẫn xuất, không INSERT/UPDATE)

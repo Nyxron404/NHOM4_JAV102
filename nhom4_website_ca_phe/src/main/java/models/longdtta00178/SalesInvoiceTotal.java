@@ -1,8 +1,9 @@
 package models.longdtta00178;
 
-import models.enums.SalesInvoiceStatus;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+
+import models.enums.SalesInvoiceStatus;
 
 /**
  * Tổng tiền hóa đơn bán (dữ liệu dẫn xuất, không INSERT/UPDATE)

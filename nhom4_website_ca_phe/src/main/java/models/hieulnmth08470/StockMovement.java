@@ -1,7 +1,8 @@
 package models.hieulnmth08470;
 
-import models.enums.MovementType;
 import java.time.OffsetDateTime;
+
+import models.enums.MovementType;
 
 /**
  * Sổ cái biến động tồn (append-only), tồn = SUM theo lô

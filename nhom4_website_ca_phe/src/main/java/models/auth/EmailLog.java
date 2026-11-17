@@ -1,7 +1,8 @@
 package models.auth;
 
-import models.enums.EmailStatus;
 import java.time.OffsetDateTime;
+
+import models.enums.EmailStatus;
 
 /**
  * Email đã gửi qua Brevo

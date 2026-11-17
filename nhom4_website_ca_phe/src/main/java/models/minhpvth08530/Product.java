@@ -1,7 +1,8 @@
 package models.minhpvth08530;
 
-import models.enums.ActiveStatus;
 import java.time.OffsetDateTime;
+
+import models.enums.ActiveStatus;
 
 /**
  * Sản phẩm (trang QR chung, vd Cafe Robusta)

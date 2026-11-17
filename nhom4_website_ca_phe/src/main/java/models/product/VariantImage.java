@@ -17,6 +17,8 @@ public class VariantImage {
     private String imageUrl;
     /** sort_order | SMALLINT | NOT NULL */
     private Integer sortOrder;
+    /** public_id | VARCHAR(255) | NOT NULL | UNIQUE — public_id Cloudinary, dùng để xóa/thay ảnh */
+    private String publicId;
 
     public VariantImage() {}
 
@@ -28,9 +30,12 @@ public class VariantImage {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public Integer getSortOrder() { return sortOrder; }
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+    public String getPublicId() { return publicId; }
+    public void setPublicId(String publicId) { this.publicId = publicId; }
 
     @Override
     public String toString() {
-        return "VariantImage{" + "imageId=" + imageId + ", variantId=" + variantId + ", imageUrl=" + imageUrl + ", sortOrder=" + sortOrder + "}";
+        return "VariantImage{" + "imageId=" + imageId + ", variantId=" + variantId + ", imageUrl=" + imageUrl
+                + ", sortOrder=" + sortOrder + ", publicId=" + publicId + "}";
     }
 }

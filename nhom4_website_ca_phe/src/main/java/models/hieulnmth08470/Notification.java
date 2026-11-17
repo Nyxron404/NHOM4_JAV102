@@ -1,7 +1,8 @@
 package models.hieulnmth08470;
 
-import models.enums.NotificationType;
 import java.time.OffsetDateTime;
+
+import models.enums.NotificationType;
 
 /**
  * Thông báo hệ thống (cận hạn, hết hạn, tồn thấp)

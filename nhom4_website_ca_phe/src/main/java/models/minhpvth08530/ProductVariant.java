@@ -1,7 +1,8 @@
 package models.minhpvth08530;
 
-import models.enums.VariantStatus;
 import java.time.OffsetDateTime;
+
+import models.enums.VariantStatus;
 
 /**
  * Biến thể = tổ hợp vùng, giống, sơ chế, mức rang

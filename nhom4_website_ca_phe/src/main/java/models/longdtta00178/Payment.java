@@ -1,8 +1,9 @@
 package models.longdtta00178;
 
-import models.enums.PaymentStatus;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+
+import models.enums.PaymentStatus;
 
 /**
  * Giao dịch thanh toán của hóa đơn
