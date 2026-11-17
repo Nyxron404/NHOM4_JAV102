@@ -21,6 +21,13 @@ public class SalesInvoiceLine {
     private Integer quantity;
     /** unit_price | NUMERIC(14,0) | NOT NULL */
     private BigDecimal unitPrice;
+        // ---- Thông tin hiển thị (tính từ JOIN, không lưu DB) ----
+    private String sku;
+    private String variantName;
+    private Integer weightG;
+    private Boolean wholeBean;
+    /** Số lượng tối đa được bán = tồn các lô còn hạn của gói */
+    private Integer maxQty;
 
     public SalesInvoiceLine() {}
 
@@ -34,7 +41,20 @@ public class SalesInvoiceLine {
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
     public BigDecimal getUnitPrice() { return unitPrice; }
     public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
-
+        public String getSku() { return sku; }
+    public void setSku(String sku) { this.sku = sku; }
+    public String getVariantName() { return variantName; }
+    public void setVariantName(String variantName) { this.variantName = variantName; }
+    public Integer getWeightG() { return weightG; }
+    public void setWeightG(Integer weightG) { this.weightG = weightG; }
+    public Boolean getWholeBean() { return wholeBean; }
+    public void setWholeBean(Boolean wholeBean) { this.wholeBean = wholeBean; }
+    public Integer getMaxQty() { return maxQty; }
+    public void setMaxQty(Integer maxQty) { this.maxQty = maxQty; }
+    /** Thành tiền = số lượng * đơn giá */
+    public BigDecimal getLineAmount() {
+        return unitPrice == null || quantity == null ? BigDecimal.ZERO : unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
     @Override
     public String toString() {
         return "SalesInvoiceLine{" + "salesLineId=" + salesLineId + ", salesInvoiceId=" + salesInvoiceId + ", packageId=" + packageId + ", quantity=" + quantity + ", unitPrice=" + unitPrice + "}";

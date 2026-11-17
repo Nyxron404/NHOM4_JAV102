@@ -4,6 +4,8 @@ import java.time.OffsetDateTime;
 
 import models.enums.SalesInvoiceStatus;
 
+import java.math.BigDecimal;
+
 /**
  * Hóa đơn bán tại quầy
  * <p>Bảng: sales_invoices</p>
@@ -32,6 +34,14 @@ public class SalesInvoice {
     /** is_restocked | BOOLEAN */
     private Boolean isRestocked;
 
+    // ---- Thông tin hiển thị (tính từ JOIN / SUM, không lưu DB) ----
+    /** users.full_name của người tạo đơn */
+    private String cashierName;
+    /** Tổng tiền = SUM(quantity * unit_price) các dòng */
+    private BigDecimal totalAmount = BigDecimal.ZERO;
+    /** Đã thu = SUM(payments.amount) các giao dịch SUCCESS */
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
     public SalesInvoice() {}
 
     public Long getSalesInvoiceId() { return salesInvoiceId; }
@@ -52,7 +62,14 @@ public class SalesInvoice {
     public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
     public Boolean getIsRestocked() { return isRestocked; }
     public void setIsRestocked(Boolean isRestocked) { this.isRestocked = isRestocked; }
-
+        public String getCashierName() { return cashierName; }
+    public void setCashierName(String cashierName) { this.cashierName = cashierName; }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public BigDecimal getPaidAmount() { return paidAmount; }
+    public void setPaidAmount(BigDecimal paidAmount) { this.paidAmount = paidAmount; }
+    /** Còn phải thu = tổng tiền - đã thu */
+    public BigDecimal getDueAmount() { return totalAmount.subtract(paidAmount); }
     @Override
     public String toString() {
         return "SalesInvoice{" + "salesInvoiceId=" + salesInvoiceId + ", invoiceNo=" + invoiceNo + ", createdBy=" + createdBy + ", createdAt=" + createdAt + ", status=" + status + ", cancelledBy=" + cancelledBy + ", cancelledAt=" + cancelledAt + ", cancelReason=" + cancelReason + ", isRestocked=" + isRestocked + "}";

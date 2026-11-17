@@ -6,6 +6,8 @@ import java.util.Map;
 
 import models.longdtta00178.SalesProductCard;
 import models.longdtta00178.SellablePackage;
+import models.longdtta00178.SalesInvoice;
+import models.longdtta00178.SalesInvoiceLine;
 
 /**
  * Tự ghép chuỗi JSON cho phần bán hàng (dự án chưa có thư viện Gson/Jackson).
@@ -86,6 +88,39 @@ public final class SalesJson {
             sb.append(']');
         }
         return sb.append('}').toString();
+    }
+
+        /**
+     * Đơn đang lập -> {"invoice":{...},"lines":[{...},...]}
+     */
+    public static String order(SalesInvoice inv, List<SalesInvoiceLine> lines) {
+        StringBuilder sb = new StringBuilder("{\"invoice\":{");
+        field(sb, "salesInvoiceId", inv.getSalesInvoiceId()).append(',');
+        field(sb, "invoiceNo", inv.getInvoiceNo()).append(',');
+        field(sb, "status", inv.getStatus()).append(',');           // PENDING | PAID | CANCELLED
+        field(sb, "createdAt", inv.getCreatedAt()).append(',');     // 2026-11-18T01:30:12+07:00
+        field(sb, "cashierName", inv.getCashierName()).append(',');
+        field(sb, "totalAmount", inv.getTotalAmount()).append(',');
+        field(sb, "paidAmount", inv.getPaidAmount()).append(',');
+        field(sb, "dueAmount", inv.getDueAmount());
+        sb.append("},\"lines\":[");
+        for (int i = 0; i < lines.size(); i++) {
+            SalesInvoiceLine l = lines.get(i);
+            if (i > 0) sb.append(',');
+            sb.append('{');
+            field(sb, "salesLineId", l.getSalesLineId()).append(',');
+            field(sb, "packageId", l.getPackageId()).append(',');
+            field(sb, "sku", l.getSku()).append(',');
+            field(sb, "variantName", l.getVariantName()).append(',');
+            field(sb, "weightG", l.getWeightG()).append(',');
+            field(sb, "wholeBean", l.getWholeBean()).append(',');
+            field(sb, "quantity", l.getQuantity()).append(',');
+            field(sb, "unitPrice", l.getUnitPrice()).append(',');
+            field(sb, "lineAmount", l.getLineAmount()).append(',');
+            field(sb, "maxQty", l.getMaxQty());
+            sb.append('}');
+        }
+        return sb.append("]}").toString();
     }
 
     /** {"error":"..."} */

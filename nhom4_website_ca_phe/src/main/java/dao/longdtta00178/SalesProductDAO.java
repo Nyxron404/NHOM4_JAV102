@@ -142,8 +142,8 @@ public class SalesProductDAO {
     }
 
     /** Danh mục cho các ô lọc (loài, vùng trồng, mức rang): tải 1 lần khi mở trang. */
-    public Map<String, Object> findFilterOptions() throws SQLException {
-        Map<String, Object> result = new LinkedHashMap<>();
+    public Map<String, List<Map<String, Object>>> findFilterOptions() throws SQLException {
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
         try (Connection con = connect()) {
             result.put("species", lookup(con,
                     "SELECT species_id AS id, species_name AS name FROM coffee_species ORDER BY species_name"));

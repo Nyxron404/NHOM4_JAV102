@@ -229,7 +229,7 @@
             <div class="panel filter-box">
               <div class="search-box">
                 <span>🔍</span>
-                <input type="text" id="searchInput" placeholder="Tìm tên cà phê hoặc mã SKU (VD: culi, FR-CULI)" />
+                <input type="text" id="searchInput" placeholder="Tìm kiếm" />
               </div>
 
               <!-- Chip loài: JS đổ từ coffee_species -->
@@ -269,63 +269,32 @@
 
           <!-- ========== CỘT PHẢI: ĐƠN ĐANG LẬP ========== -->
           <div class="panel order">
-            <!-- Đầu đơn (130): mã đơn sinh khi tạo, trạng thái PENDING -->
+                        <!-- Đầu đơn (130): JS điền mã đơn, giờ tạo, thu ngân, trạng thái -->
             <div class="order-head">
               <div>
-                <div class="order-no">HD261118-0002</div>
-                <div class="muted">18/11/2026 01:30 · Thu ngân: Quầy 01</div>
+                <div class="order-no" id="orderNo">Đơn mới</div>
+                <div class="muted" id="orderMeta">Bấm + ở gói cà phê để bắt đầu</div>
               </div>
-              <span class="status status-pending">Chờ thanh toán</span>
+              <div class="order-head-right">
+                <span id="orderStatus"></span>
+                <button class="btn btn-sm" id="btnNewOrder" title="Để đơn này chờ, bắt đầu đơn trống">+ Đơn mới</button>
+              </div>
             </div>
 
-            <!-- Dòng hàng (132 thêm, 132.2 đổi SL, 134 xóa). SL tối đa = tồn còn hạn -->
-            <div class="lines">
-              <div class="line">
-                <div class="line-top">
-                  <div>
-                    <div class="line-name">Robusta Honey</div>
-                    <div class="sub">250g · Nguyên hạt · 120.000đ</div>
-                  </div>
-                  <button class="icon-btn" title="Bỏ khỏi đơn">✕</button>
-                </div>
-                <div class="line-bottom">
-                  <div class="qty">
-                    <button>−</button>
-                    <span>2</span>
-                    <button>+</button>
-                  </div>
-                  <span class="sub">tối đa 28</span>
-                  <span class="line-amount">240.000đ</span>
-                </div>
-              </div>
+            <!-- Thông báo lỗi (vượt tồn, chưa có giá...) -->
+            <div class="order-msg" id="orderMsg"></div>
 
-
-              <div class="line">
-                <div class="line-top">
-                  <div>
-                    <div class="line-name">Culi Tây Nguyên</div>
-                    <div class="sub">250g · Xay phin · 130.000đ</div>
-                  </div>
-                  <button class="icon-btn" title="Bỏ khỏi đơn">✕</button>
-                </div>
-                <div class="line-bottom">
-                  <div class="qty">
-                    <button>−</button>
-                    <span>1</span>
-                    <button>+</button>
-                  </div>
-                  <span class="sub">tối đa 18</span>
-                  <span class="line-amount">130.000đ</span>
-                </div>
-              </div>
+            <!-- Dòng hàng (132 thêm, 132.2 đổi SL, 134 xóa): JS vẽ vào đây. SL tối đa = tồn còn hạn -->
+            <div class="lines" id="orderLines">
+              <div class="order-empty">Chưa có gói nào trong đơn</div>
             </div>
 
             <!-- Tổng tiền (137) và số đã thu / còn thiếu (C8) -->
             <div class="summary">
-              <div class="kv"><span>Số lượng</span><span>3 túi · 2 gói</span></div>
-              <div class="kv kv-total"><span>Tổng tiền</span><span>370.000đ</span></div>
-              <div class="kv"><span>Đã thu</span><span>0đ</span></div>
-              <div class="kv kv-due"><span>Còn phải thu</span><span>370.000đ</span></div>
+              <div class="kv"><span>Số lượng</span><span id="sumQty">0 túi · 0 gói</span></div>
+              <div class="kv kv-total"><span>Tổng tiền</span><span id="sumTotal">0đ</span></div>
+              <div class="kv"><span>Đã thu</span><span id="sumPaid">0đ</span></div>
+              <div class="kv kv-due"><span>Còn phải thu</span><span id="sumDue">0đ</span></div>
             </div>
 
             <!-- Thanh toán: phương thức lấy từ payment_methods (is_active) -->
@@ -494,6 +463,6 @@
     </div>
 
     <script src="../assets/js/shared.js"></script>
-    <script src="../assets/js/longdtta00178.js" ></script>
+    <script src="../assets/js/longdtta00178.js"></script>
   </body>
 </html>

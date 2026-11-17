@@ -197,17 +197,223 @@ function bindFilters() {
         filter.inStock = e.target.checked; loadProducts();
     });
 
-    // Nút + : bước sau (thêm vào đơn - UC 132). Tạm thời chỉ báo mã gói.
+        // Nút + : thêm gói vào đơn (UC 130 + 132)
     document.getElementById("productGrid").addEventListener("click", e => {
         const button = e.target.closest(".pkg-add");
         if (!button || button.disabled) return;
-        console.log("Thêm gói vào đơn, package_id =", button.dataset.packageId);
+        addToOrder(button.dataset.packageId);
+    });
+}
+
+/* =====================================================================
+   ĐƠN ĐANG LẬP (UC 130 tạo đơn, 132 thêm gói / đổi SL, 134 xóa gói)
+   API: ../api/ban-hang/don   (SalesOrderController)
+   Mã đơn đang lập lưu ở localStorage để F5 trang không mất đơn.
+   ===================================================================== */
+
+const API_ORDER = "../api/ban-hang/don";
+const ORDER_KEY = "pos.currentInvoiceId";
+let currentOrder = null;          // {invoice:{...}, lines:[...]} hoặc null = chưa có đơn
+
+const STATUS_TEXT = {
+    PENDING: ["Chờ thanh toán", "status-pending"],
+    PAID: ["Đã xác nhận", "status-paid"],
+    CANCELLED: ["Đã hủy", "status-cancel"]
+};
+
+/* ---------- Gọi API ---------- */
+// Gửi POST dạng form (servlet đọc bằng req.getParameter)
+async function postOrder(data) {
+    const response = await fetch(API_ORDER, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+        body: new URLSearchParams(data)
+    });
+    const json = await response.json();
+    if (!response.ok) throw new Error(json.error || ("Lỗi " + response.status));
+    return json;
+}
+
+function saveOrder(order) {
+    currentOrder = order;
+    if (order && order.invoice.status === "PENDING") {
+        localStorage.setItem(ORDER_KEY, order.invoice.salesInvoiceId);
+    } else {
+        localStorage.removeItem(ORDER_KEY);
+    }
+    renderOrder();
+}
+
+// Mở trang: lấy lại đơn đang lập (nếu có)
+async function loadCurrentOrder() {
+    const id = localStorage.getItem(ORDER_KEY);
+    if (!id) { saveOrder(null); return; }
+    try {
+        const order = await getJson(API_ORDER + "?id=" + id);
+        saveOrder(order.invoice.status === "PENDING" ? order : null);   // đơn đã đóng -> bắt đầu đơn mới
+    } catch (error) {
+        saveOrder(null);
+    }
+}
+
+// Bấm + ở gói: chưa có đơn thì tạo đơn trước (130), rồi thêm gói (132)
+async function addToOrder(packageId) {
+    try {
+        if (!currentOrder) {
+            saveOrder(await postOrder({ action: "create" }));
+        }
+        saveOrder(await postOrder({
+            action: "addPackage",
+            invoiceId: currentOrder.invoice.salesInvoiceId,
+            packageId: packageId,
+            quantity: 1
+        }));
+        showOrderMessage("");
+    } catch (error) {
+        showOrderMessage(error.message);
+    }
+}
+
+async function changeQuantity(lineId, quantity) {
+    try {
+        saveOrder(await postOrder({
+            action: "updateQty",
+            invoiceId: currentOrder.invoice.salesInvoiceId,
+            lineId: lineId,
+            quantity: quantity
+        }));
+        showOrderMessage("");
+    } catch (error) {
+        showOrderMessage(error.message);
+        renderOrder();                       // trả ô số lượng về giá trị cũ
+    }
+}
+
+async function removeLine(lineId) {
+    try {
+        saveOrder(await postOrder({
+            action: "removeLine",
+            invoiceId: currentOrder.invoice.salesInvoiceId,
+            lineId: lineId
+        }));
+        showOrderMessage("");
+    } catch (error) {
+        showOrderMessage(error.message);
+    }
+}
+
+/* ---------- Vẽ đơn ---------- */
+function showOrderMessage(text) {
+    const box = document.getElementById("orderMsg");
+    box.textContent = text;
+    box.style.display = text ? "block" : "none";
+}
+
+function dateTimeText(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString("vi-VN") + " " +
+        d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+
+function renderOrder() {
+    const linesBox = document.getElementById("orderLines");
+
+    if (!currentOrder) {
+        document.getElementById("orderNo").textContent = "Đơn mới";
+        document.getElementById("orderMeta").textContent = "Bấm + ở gói cà phê để bắt đầu";
+        document.getElementById("orderStatus").innerHTML = "";
+        linesBox.innerHTML = '<div class="order-empty">Chưa có gói nào trong đơn</div>';
+        setSummary(0, 0, 0, 0, 0);
+        return;
+    }
+
+    const inv = currentOrder.invoice;
+    const lines = currentOrder.lines;
+    const [statusText, statusClass] = STATUS_TEXT[inv.status] || [inv.status, ""];
+
+    document.getElementById("orderNo").textContent = inv.invoiceNo;
+    document.getElementById("orderMeta").textContent =
+        dateTimeText(inv.createdAt) + " · Thu ngân: " + (inv.cashierName || "");
+    document.getElementById("orderStatus").innerHTML =
+        `<span class="status ${statusClass}">${statusText}</span>`;
+
+    linesBox.innerHTML = lines.length === 0
+        ? '<div class="order-empty">Chưa có gói nào trong đơn</div>'
+        : lines.map(lineHtml).join("");
+
+    const totalQty = lines.reduce((sum, l) => sum + l.quantity, 0);
+    setSummary(totalQty, lines.length, inv.totalAmount, inv.paidAmount, inv.dueAmount);
+}
+
+function lineHtml(l) {
+    const form = l.wholeBean ? "Nguyên hạt" : "Xay sẵn";
+    const overStock = l.quantity > l.maxQty;       // tồn giảm sau khi thêm vào đơn
+    return `
+      <div class="line">
+        <div class="line-top">
+          <div>
+            <div class="line-name">${esc(l.variantName)}</div>
+            <div class="sub">${weightText(l.weightG)} · ${form} · ${money(l.unitPrice)}</div>
+          </div>
+          <button class="icon-btn" title="Bỏ khỏi đơn" data-action="remove" data-line-id="${l.salesLineId}">✕</button>
+        </div>
+        <div class="line-bottom">
+          <div class="qty">
+            <button data-action="minus" data-line-id="${l.salesLineId}" ${l.quantity <= 1 ? "disabled" : ""}>−</button>
+            <input class="qty-input" type="number" min="1" max="${l.maxQty}" value="${l.quantity}"
+                   data-line-id="${l.salesLineId}" />
+            <button data-action="plus" data-line-id="${l.salesLineId}" ${l.quantity >= l.maxQty ? "disabled" : ""}>+</button>
+          </div>
+          <span class="sub ${overStock ? "text-warn" : ""}">tối đa ${l.maxQty}</span>
+          <span class="line-amount">${money(l.lineAmount)}</span>
+        </div>
+      </div>`;
+}
+
+function setSummary(qty, packageCount, total, paid, due) {
+    document.getElementById("sumQty").textContent = qty + " túi · " + packageCount + " gói";
+    document.getElementById("sumTotal").textContent = money(total);
+    document.getElementById("sumPaid").textContent = money(paid);
+    document.getElementById("sumDue").textContent = money(due);
+}
+
+/* ---------- Sự kiện trong đơn ---------- */
+function bindOrderEvents() {
+    const linesBox = document.getElementById("orderLines");
+
+    // Nút −, +, ✕
+    linesBox.addEventListener("click", e => {
+        const button = e.target.closest("button[data-action]");
+        if (!button || button.disabled || !currentOrder) return;
+        const lineId = Number(button.dataset.lineId);
+        const line = currentOrder.lines.find(l => l.salesLineId === lineId);
+        if (!line) return;
+
+        if (button.dataset.action === "minus") changeQuantity(lineId, line.quantity - 1);
+        if (button.dataset.action === "plus") changeQuantity(lineId, line.quantity + 1);
+        if (button.dataset.action === "remove") removeLine(lineId);
+    });
+
+    // Gõ số lượng trực tiếp rồi Enter / rời ô
+    linesBox.addEventListener("change", e => {
+        if (!e.target.classList.contains("qty-input")) return;
+        const quantity = parseInt(e.target.value, 10);
+        if (!quantity || quantity < 1) { renderOrder(); return; }
+        changeQuantity(Number(e.target.dataset.lineId), quantity);
+    });
+
+    // Đơn mới: để đơn hiện tại ở trạng thái chờ (xem lại ở tab Hóa đơn), bắt đầu đơn trống
+    document.getElementById("btnNewOrder").addEventListener("click", () => {
+        saveOrder(null);
+        showOrderMessage("");
     });
 }
 
 /* ---------- Khởi động ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
     bindFilters();
+    bindOrderEvents();
+    loadCurrentOrder();
     try {
         await loadFilterOptions();
     } catch (error) {
