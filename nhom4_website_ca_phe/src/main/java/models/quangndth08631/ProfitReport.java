@@ -20,12 +20,16 @@ public class ProfitReport {
                 FROM sales_line_allocations a
                 JOIN sales_invoice_lines sil ON sil.sales_line_id = a.sales_line_id
                 JOIN sales_invoices si ON si.sales_invoice_id = sil.sales_invoice_id
-                                JOIN payments p ON p.sales_invoice_id = si.sales_invoice_id
-                                                                AND p.status = 'SUCCESS'
+                JOIN (
+                    SELECT p.sales_invoice_id, MAX(p.paid_at) AS paid_at
+                    FROM payments p
+                    WHERE p.status = 'SUCCESS'
+                    GROUP BY p.sales_invoice_id
+                ) paid ON paid.sales_invoice_id = si.sales_invoice_id
                 JOIN lots l ON l.lot_id = a.lot_id
                 JOIN purchase_invoice_lines pil ON pil.purchase_line_id = l.purchase_line_id
                 WHERE si.status = 'PAID'
-                                    AND (p.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN ? AND ?
+                  AND (paid.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN ? AND ?
             ), disposal AS (
                 SELECT COALESCE(SUM(dl.loss_amount), 0) AS amount
                 FROM v_disposal_losses dl

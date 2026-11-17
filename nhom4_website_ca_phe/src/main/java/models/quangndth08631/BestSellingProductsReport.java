@@ -10,16 +10,23 @@ import java.util.Map;
 public class BestSellingProductsReport {
 
     private static final String SQL = """
+            WITH paid AS (
+                SELECT p.sales_invoice_id, MAX(p.paid_at) AS paid_at
+                FROM payments p
+                WHERE p.status = 'SUCCESS'
+                GROUP BY p.sales_invoice_id
+            )
             SELECT pr.product_id, pr.product_code, pr.product_name,
                    SUM(sil.quantity) AS quantity_sold,
                    SUM(sil.quantity * sil.unit_price) AS sales_amount
             FROM sales_invoice_lines sil
             JOIN sales_invoices si ON si.sales_invoice_id = sil.sales_invoice_id
+            JOIN paid ON paid.sales_invoice_id = si.sales_invoice_id
             JOIN packages pa ON pa.package_id = sil.package_id
             JOIN product_variants pv ON pv.variant_id = pa.variant_id
             JOIN products pr ON pr.product_id = pv.product_id
             WHERE si.status = 'PAID'
-              AND (si.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN ? AND ?
+              AND (paid.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN ? AND ?
             GROUP BY pr.product_id, pr.product_code, pr.product_name
             ORDER BY quantity_sold DESC, sales_amount DESC
             """;
