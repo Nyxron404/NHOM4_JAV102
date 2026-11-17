@@ -1,0 +1,309 @@
+/* =====================================================================
+   Danh mục phân loại & Nhà cung cấp - Lê Nguyễn Minh Hiếu (hieulnmth08470)
+   Dùng chung bảng màu với shared.css: nền #faf7f2, nâu #8b5a2b, cam #d97706
+   Mọi class có tiền tố hl- để không đụng CSS của thành viên khác.
+   ===================================================================== */
+
+.hl-page {
+  max-width: 1280px;
+  margin: 20px auto 60px;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ---------- Thanh tab bên trái ---------- */
+.hl-tabs {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #ffffff;
+  border: 1px solid #eae2d6;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.hl-tab {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #2c1e16;
+}
+
+.hl-tab:hover { background: #faf7f2; color: #d97706; }
+.hl-tab.active { background: #8b5a2b; color: #ffffff; font-weight: bold; }
+
+.hl-tab-group {
+  margin: 10px 12px 4px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a8927c;
+}
+
+.hl-content { min-width: 0; }
+
+/* ---------- Tiêu đề trang ---------- */
+.hl-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.hl-head h1 { font-size: 26px; margin-bottom: 4px; }
+.hl-sub { color: #8b5a2b; font-size: 14px; line-height: 1.5; }
+.hl-crumb { margin-bottom: 6px; font-size: 14px; }
+
+/* ---------- Nút ---------- */
+.hl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1px solid #eae2d6;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #2c1e16;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.15s;
+}
+
+.hl-btn:hover { border-color: #d97706; color: #d97706; }
+.hl-btn-primary { background: #8b5a2b; border-color: #8b5a2b; color: #ffffff; }
+.hl-btn-primary:hover { background: #d97706; border-color: #d97706; color: #ffffff; }
+.hl-btn-danger { color: #b42318; }
+.hl-btn-danger:hover { background: #b42318; border-color: #b42318; color: #ffffff; }
+.hl-btn-sm { padding: 5px 10px; font-size: 13px; }
+.hl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.hl-btn:disabled:hover { border-color: #eae2d6; color: inherit; background: #ffffff; }
+
+.hl-link { color: #8b5a2b; text-decoration: underline; text-underline-offset: 2px; }
+.hl-link:hover { color: #d97706; }
+
+/* ---------- Thông báo ---------- */
+.hl-alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  border: 1px solid;
+}
+
+.hl-alert-ok { background: #ecfdf3; border-color: #abefc6; color: #067647; }
+.hl-alert-err { background: #fef3f2; border-color: #fecdca; color: #b42318; }
+
+/* ---------- Form thêm/sửa ---------- */
+.hl-panel {
+  background: #ffffff;
+  border: 1px solid #eae2d6;
+  border-left: 4px solid #d97706;
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 22px;
+}
+
+.hl-panel h2 { font-size: 18px; margin-bottom: 14px; }
+
+.hl-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.hl-span-2 { grid-column: span 2; }
+
+.hl-field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.hl-field > span { font-weight: bold; }
+.hl-field b { color: #b42318; }
+
+.hl-field input,
+.hl-field select,
+.hl-field textarea,
+.hl-search input,
+.hl-search select {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #d9cfc1;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 14px;
+  font-family: inherit;
+  color: #2c1e16;
+}
+
+.hl-field textarea { resize: vertical; }
+
+.hl-field input:focus,
+.hl-field select:focus,
+.hl-field textarea:focus,
+.hl-search input:focus,
+.hl-search select:focus {
+  outline: none;
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+}
+
+.hl-upper { text-transform: uppercase; }
+
+.hl-check { flex-direction: row; align-items: center; gap: 10px; align-self: end; padding-bottom: 10px; }
+.hl-check input { width: 18px; height: 18px; accent-color: #8b5a2b; }
+.hl-check > span { font-weight: normal; }
+
+.hl-hint { color: #a8927c; font-size: 12px; }
+.hl-err { color: #b42318; font-size: 12px; min-height: 0; }
+.hl-err:empty { display: none; }
+.has-error input, .has-error select, .has-error textarea { border-color: #b42318; background: #fffbfa; }
+
+.hl-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+/* ---------- Tìm kiếm ---------- */
+.hl-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.hl-search input { flex: 1 1 320px; }
+.hl-search select { flex: 0 1 220px; width: auto; }
+
+/* ---------- Bảng ---------- */
+.hl-table-wrap {
+  background: #ffffff;
+  border: 1px solid #eae2d6;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.hl-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+.hl-table th {
+  text-align: left;
+  padding: 11px 14px;
+  background: #f6f0e7;
+  color: #6b4a2b;
+  font-size: 13px;
+  white-space: nowrap;
+  border-bottom: 1px solid #eae2d6;
+}
+
+.hl-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1ebe2;
+  vertical-align: top;
+}
+
+.hl-table tbody tr:last-child td { border-bottom: 0; }
+.hl-table tbody tr:hover { background: #fdfaf6; }
+.hl-table tr.is-editing { background: #fff7ea; box-shadow: inset 4px 0 0 #d97706; }
+.hl-table tr.is-inactive td { color: #a8927c; }
+.hl-table-compact td { padding: 8px 14px; vertical-align: middle; }
+
+.hl-num { text-align: right; width: 1%; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hl-act { width: 1%; white-space: nowrap; text-align: right; }
+.hl-act > * { margin-left: 4px; }
+.hl-choice { text-align: center; width: 120px; }
+.hl-choice input { width: 18px; height: 18px; accent-color: #8b5a2b; cursor: pointer; }
+.hl-inline { display: inline; }
+
+.hl-muted { color: #8b7764; font-size: 13px; }
+.hl-clip {
+  max-width: 360px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hl-empty { text-align: center; padding: 34px 14px !important; color: #8b7764; }
+.hl-count { margin-top: 8px; font-size: 13px; color: #8b7764; }
+
+.hl-badge {
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #f6f0e7;
+  color: #6b4a2b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.hl-badge-rec { background: #fdecc8; color: #93370d; font-weight: bold; }
+
+.hl-code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  background: #f6f0e7;
+  padding: 2px 6px;
+  border-radius: 5px;
+  color: #6b4a2b;
+}
+
+.hl-order {
+  display: inline-block;
+  min-width: 26px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #8b5a2b;
+  color: #ffffff;
+  text-align: center;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.hl-status { font-size: 12px; font-weight: bold; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.hl-status.on { background: #ecfdf3; color: #067647; }
+.hl-status.off { background: #f2f0ee; color: #6b5d50; }
+
+/* ---------- Trang tổng quan ---------- */
+.hl-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.hl-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #eae2d6;
+  border-radius: 12px;
+  transition: 0.15s;
+}
+
+.hl-card:hover { border-color: #d97706; transform: translateY(-2px); }
+.hl-card-icon { font-size: 28px; }
+.hl-card small { color: #8b5a2b; }
+
+/* ---------- Màn hình hẹp ---------- */
+@media (max-width: 900px) {
+  .hl-page { grid-template-columns: 1fr; }
+  .hl-tabs { position: static; flex-direction: row; flex-wrap: wrap; }
+  .hl-tab-group { display: none; }
+  .hl-grid { grid-template-columns: 1fr; }
+  .hl-span-2 { grid-column: auto; }
+  .hl-head { flex-direction: column; align-items: flex-start; }
+  .hl-search { flex-wrap: wrap; }
+}
+
+/* ---------- Bổ sung cho bản HTML + JS ---------- */
+[hidden] { display: none !important; }
+.hl-search-filters { display: contents; }
+.hl-search-filters select { flex: 0 1 220px; width: auto; }

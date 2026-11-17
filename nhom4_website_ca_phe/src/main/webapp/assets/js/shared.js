@@ -41,7 +41,8 @@ function renderHeader() {
             </div>
         </div>
     </header>`
-    document.getElementById("header").innerHTML = header;
+    const el = document.getElementById("header");
+    if (el) el.innerHTML = header;   // trang nào không có <div id="header"> thì bỏ qua
 }
 renderHeader();
 function renderHome() {
@@ -49,6 +50,7 @@ function renderHome() {
       <div class="home-bar">
         <a href="../index.html" class="home-btn">🏠 Trang chủ</a>
       </div>`
-      document.getElementById("home").innerHTML = home;
+      const el = document.getElementById("home");
+      if (el) el.innerHTML = home;   // index.html không có <div id="home"> nên phải kiểm tra
 }
 renderHome();

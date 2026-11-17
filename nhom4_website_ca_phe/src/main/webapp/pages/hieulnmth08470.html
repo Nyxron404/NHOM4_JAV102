@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../assets/css/shared.css" />
+    <link rel="stylesheet" href="../assets/css/hieulnmth08470.css" />
+    <title>Danh mục &amp; Nhà cung cấp</title>
+</head>
+<body>
+<!-- Header chung của nhóm (shared.js vẽ vào đây) -->
+<div id="header"></div>
+<div id="home"></div>
+
+<!--
+    Danh mục phân loại & Nhà cung cấp - Lê Nguyễn Minh Hiếu (hieulnmth08470)
+    Trang 1 file, đổi màn hình theo phần # trên địa chỉ:
+      #tong-quan            trang tổng quan
+      #vung-trong?q=...     danh sách vùng trồng (tương tự cho các danh mục khác)
+      #phuong-phap-pha/gan-do-xay?id=3   gán độ xay cho phương pháp pha
+    Dữ liệu lấy từ Servlet /api/danh-muc/... (JSON) trong assets/js/hieulnmth08470.js
+-->
+<div class="hl-page">
+    <nav class="hl-tabs" aria-label="Danh mục">
+        <a href="#tong-quan" class="hl-tab" data-tab="tong-quan">Tổng quan</a>
+        <span class="hl-tab-group">Phân loại</span>
+        <a href="#vung-trong" class="hl-tab" data-tab="vung-trong">Vùng trồng</a>
+        <a href="#loai-ca-phe" class="hl-tab" data-tab="loai-ca-phe">Loài cà phê</a>
+        <a href="#giong-ca-phe" class="hl-tab" data-tab="giong-ca-phe">Giống cà phê</a>
+        <a href="#so-che" class="hl-tab" data-tab="so-che">Sơ chế</a>
+        <a href="#muc-rang" class="hl-tab" data-tab="muc-rang">Mức rang</a>
+        <a href="#phuong-phap-pha" class="hl-tab" data-tab="phuong-phap-pha">Phương pháp pha</a>
+        <a href="#do-xay" class="hl-tab" data-tab="do-xay">Độ xay</a>
+        <span class="hl-tab-group">Đối tác</span>
+        <a href="#nha-cung-cap" class="hl-tab" data-tab="nha-cung-cap">Nhà cung cấp</a>
+    </nav>
+
+    <main class="hl-content">
+        <!-- Thông báo xanh (thành công) / đỏ (lỗi) -->
+        <div id="alert" class="hl-alert" role="status" hidden></div>
+
+        <!-- ===================== MÀN HÌNH TỔNG QUAN ===================== -->
+        <section id="view-home" hidden>
+            <div class="hl-head">
+                <div>
+                    <h1>Danh mục phân loại &amp; Nhà cung cấp</h1>
+                    <p class="hl-sub">Dữ liệu nền dùng khi khai báo sản phẩm, biến thể, gói bán và nhập hàng.</p>
+                </div>
+            </div>
+            <div class="hl-cards">
+                <a class="hl-card" href="#vung-trong"><span class="hl-card-icon">⛰️</span><strong>Vùng trồng</strong><small>Tỉnh, độ cao, thổ nhưỡng, khí hậu</small></a>
+                <a class="hl-card" href="#loai-ca-phe"><span class="hl-card-icon">🌱</span><strong>Loài cà phê</strong><small>Arabica, Robusta, Liberica...</small></a>
+                <a class="hl-card" href="#giong-ca-phe"><span class="hl-card-icon">🌿</span><strong>Giống cà phê</strong><small>Giống thuộc từng loài</small></a>
+                <a class="hl-card" href="#so-che"><span class="hl-card-icon">💧</span><strong>Phương pháp sơ chế</strong><small>Washed, Natural, Honey...</small></a>
+                <a class="hl-card" href="#muc-rang"><span class="hl-card-icon">🔥</span><strong>Mức rang</strong><small>Từ rang nhạt đến rang đậm</small></a>
+                <a class="hl-card" href="#phuong-phap-pha"><span class="hl-card-icon">☕</span><strong>Phương pháp pha</strong><small>Thông số pha &amp; độ xay phù hợp</small></a>
+                <a class="hl-card" href="#do-xay"><span class="hl-card-icon">⚙️</span><strong>Độ xay</strong><small>Nguyên hạt, xay thô → xay mịn</small></a>
+                <a class="hl-card" href="#nha-cung-cap"><span class="hl-card-icon">🚚</span><strong>Nhà cung cấp</strong><small>Thông tin NCC, MST, liên hệ</small></a>
+            </div>
+        </section>
+
+        <!-- ===================== MÀN HÌNH DANH SÁCH (dùng chung cho mọi danh mục) ===================== -->
+        <section id="view-list" hidden>
+            <div class="hl-head">
+                <div>
+                    <h1 id="list-title"></h1>
+                    <p class="hl-sub" id="list-sub"></p>
+                </div>
+                <button type="button" class="hl-btn hl-btn-primary" id="btn-add"></button>
+            </div>
+
+            <!-- Form thêm / sửa: các ô nhập do JS tạo theo từng danh mục -->
+            <section class="hl-panel" id="form-panel" hidden>
+                <h2 id="form-title"></h2>
+                <form id="item-form" novalidate>
+                    <div id="form-global" class="hl-alert hl-alert-err" hidden></div>
+                    <div class="hl-grid" id="form-fields"></div>
+                    <div class="hl-actions">
+                        <button type="submit" class="hl-btn hl-btn-primary">Lưu</button>
+                        <button type="button" class="hl-btn" id="btn-cancel">Hủy</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Tìm kiếm + bộ lọc -->
+            <form class="hl-search" id="search-form">
+                <input type="search" name="q" id="search-q" />
+                <span id="search-filters" class="hl-search-filters"></span>
+                <button type="submit" class="hl-btn">Tìm</button>
+                <a href="#" class="hl-link" id="clear-filter" hidden>Bỏ lọc</a>
+            </form>
+
+            <div class="hl-table-wrap">
+                <table class="hl-table">
+                    <thead id="list-head"></thead>
+                    <tbody id="list-body"></tbody>
+                </table>
+            </div>
+            <p class="hl-count" id="list-count"></p>
+        </section>
+
+        <!-- ===================== MÀN HÌNH GÁN ĐỘ XAY CHO PHƯƠNG PHÁP PHA ===================== -->
+        <section id="view-grind" hidden>
+            <div class="hl-head">
+                <div>
+                    <p class="hl-crumb"><a class="hl-link" href="#phuong-phap-pha">← Phương pháp pha</a></p>
+                    <h1 id="grind-title"></h1>
+                    <p class="hl-sub">
+                        Chọn độ xay dùng được cho phương pháp này. “Khuyến nghị” là độ xay nên dùng nhất.
+                        <br /><span id="grind-params"></span>
+                    </p>
+                </div>
+            </div>
+            <section class="hl-panel">
+                <form id="grind-form">
+                    <table class="hl-table hl-table-compact">
+                        <thead>
+                        <tr>
+                            <th class="hl-num">Thứ tự</th>
+                            <th>Độ xay</th>
+                            <th class="hl-choice">Không dùng</th>
+                            <th class="hl-choice">Phù hợp</th>
+                            <th class="hl-choice">Khuyến nghị ★</th>
+                        </tr>
+                        </thead>
+                        <tbody id="grind-body"></tbody>
+                    </table>
+                    <p class="hl-hint">Dạng “Nguyên hạt” không hiện ở đây vì không dùng để pha trực tiếp.</p>
+                    <div class="hl-actions">
+                        <button type="submit" class="hl-btn hl-btn-primary">Lưu phần gán</button>
+                        <a href="#phuong-phap-pha" class="hl-btn">Hủy</a>
+                    </div>
+                </form>
+            </section>
+        </section>
+    </main>
+</div>
+
+<script src="../assets/js/shared.js"></script>
+<script src="../assets/js/hieulnmth08470.js"></script>
+</body>
+</html>
