@@ -12,6 +12,7 @@ public class VariantImage {
     private Integer imageId;
     private Integer variantId;
     private String imageUrl;
+    private String publicId;
     private Integer sortOrder;
 
     public VariantImage() {}
@@ -22,11 +23,13 @@ public class VariantImage {
     public void setVariantId(Integer variantId) { this.variantId = variantId; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getPublicId() { return publicId; }
+    public void setPublicId(String publicId) { this.publicId = publicId; }
     public Integer getSortOrder() { return sortOrder; }
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
 
     @Override
     public String toString() {
-        return "VariantImage{" + "imageId=" + imageId + ", variantId=" + variantId + ", imageUrl=" + imageUrl + ", sortOrder=" + sortOrder + "}";
+        return "VariantImage{" + "imageId=" + imageId + ", variantId=" + variantId + ", imageUrl=" + imageUrl + ", publicId=" + publicId + ", sortOrder=" + sortOrder + "}";
     }
 }

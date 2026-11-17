@@ -1,8 +1,7 @@
 package models.minhpvth08530;
 
-import java.time.OffsetDateTime;
-
 import models.enums.ActiveStatus;
+import java.time.OffsetDateTime;
 
 /**
  * Sản phẩm (trang QR chung, vd Cafe Robusta)
@@ -21,6 +20,10 @@ public class Product {
     private ActiveStatus status = ActiveStatus.ACTIVE;
     private OffsetDateTime createdAt;
 
+    // Thông tin hiển thị (tính từ JOIN, không lưu DB)
+    private Integer variantCount;
+    private Integer activeVariantCount;
+
     public Product() {}
 
     public Integer getProductId() { return productId; }
@@ -37,6 +40,10 @@ public class Product {
     public void setStatus(ActiveStatus status) { this.status = status; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public Integer getVariantCount() { return variantCount; }
+    public void setVariantCount(Integer variantCount) { this.variantCount = variantCount; }
+    public Integer getActiveVariantCount() { return activeVariantCount; }
+    public void setActiveVariantCount(Integer activeVariantCount) { this.activeVariantCount = activeVariantCount; }
 
     @Override
     public String toString() {

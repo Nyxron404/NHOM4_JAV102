@@ -13,6 +13,12 @@ public class VariantBrewMethod {
     private Integer brewMethodId;
     private String note;
 
+    // Thông tin hiển thị (JOIN brew_methods, không lưu DB)
+    private String methodName;
+    private String coffeeWaterRatio;
+    private String waterTempC;
+    private String brewTime;
+
     public VariantBrewMethod() {}
 
     public Integer getVariantId() { return variantId; }
@@ -21,6 +27,14 @@ public class VariantBrewMethod {
     public void setBrewMethodId(Integer brewMethodId) { this.brewMethodId = brewMethodId; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
+    public String getMethodName() { return methodName; }
+    public void setMethodName(String methodName) { this.methodName = methodName; }
+    public String getCoffeeWaterRatio() { return coffeeWaterRatio; }
+    public void setCoffeeWaterRatio(String coffeeWaterRatio) { this.coffeeWaterRatio = coffeeWaterRatio; }
+    public String getWaterTempC() { return waterTempC; }
+    public void setWaterTempC(String waterTempC) { this.waterTempC = waterTempC; }
+    public String getBrewTime() { return brewTime; }
+    public void setBrewTime(String brewTime) { this.brewTime = brewTime; }
 
     @Override
     public String toString() {

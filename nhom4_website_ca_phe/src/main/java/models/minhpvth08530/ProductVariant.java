@@ -1,8 +1,9 @@
 package models.minhpvth08530;
 
-import java.time.OffsetDateTime;
-
 import models.enums.VariantStatus;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Biến thể = tổ hợp vùng, giống, sơ chế, mức rang
@@ -33,7 +34,23 @@ public class ProductVariant {
     private VariantStatus status = VariantStatus.DRAFT;
     private OffsetDateTime createdAt;
 
+    // Thông tin hiển thị (tính từ JOIN, không lưu DB)
+    private String productName;
+    private String regionName;
+    private String varietyName;
+    private String processName;
+    private String roastName;
+    private Integer packageCount;
+    private List<VariantBrewMethod> brewMethods = new ArrayList<>();
+    private List<FlavorNote> flavorNotes = new ArrayList<>();
+    private List<VariantImage> images = new ArrayList<>();
+
     public ProductVariant() {}
+
+    /** Đủ 4 thuộc tính chuyên môn thì mới được ACTIVE (CHECK của bảng). */
+    public boolean isComplete() {
+        return regionId != null && varietyId != null && processId != null && roastLevelId != null;
+    }
 
     public Integer getVariantId() { return variantId; }
     public void setVariantId(Integer variantId) { this.variantId = variantId; }
@@ -73,6 +90,24 @@ public class ProductVariant {
     public void setStatus(VariantStatus status) { this.status = status; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
+    public String getRegionName() { return regionName; }
+    public void setRegionName(String regionName) { this.regionName = regionName; }
+    public String getVarietyName() { return varietyName; }
+    public void setVarietyName(String varietyName) { this.varietyName = varietyName; }
+    public String getProcessName() { return processName; }
+    public void setProcessName(String processName) { this.processName = processName; }
+    public String getRoastName() { return roastName; }
+    public void setRoastName(String roastName) { this.roastName = roastName; }
+    public Integer getPackageCount() { return packageCount; }
+    public void setPackageCount(Integer packageCount) { this.packageCount = packageCount; }
+    public List<VariantBrewMethod> getBrewMethods() { return brewMethods; }
+    public void setBrewMethods(List<VariantBrewMethod> brewMethods) { this.brewMethods = brewMethods; }
+    public List<FlavorNote> getFlavorNotes() { return flavorNotes; }
+    public void setFlavorNotes(List<FlavorNote> flavorNotes) { this.flavorNotes = flavorNotes; }
+    public List<VariantImage> getImages() { return images; }
+    public void setImages(List<VariantImage> images) { this.images = images; }
 
     @Override
     public String toString() {
