@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../assets/css/shared.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530-tai-khoan.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/hieulnmth08470-kho.css?v=20261119g">
+    <title>Kiểm kê - Quản lý bán hàng</title>
+</head>
+<body data-page="counts">
+    <div id="header"></div>
+
+    <!-- Kiểm kê / điều chỉnh tồn UC117–UC124 — Lê Nguyễn Minh Hiếu -->
+    <div class="staff-layout">
+        <aside class="staff-side">
+            <div class="side-title"><svg viewBox="0 0 24 24"><path d="M3 5h2v2H3V5Zm4 0h14v2H7V5ZM3 11h2v2H3v-2Zm4 0h14v2H7v-2Zm-4 6h2v2H3v-2Zm4 0h14v2H7v-2Z"/></svg> TÌM KIẾM</div>
+            <!-- UC120 -->
+            <form id="countFilter">
+                <div class="acc-field"><label>Trạng thái</label>
+                    <select name="status"><option value="">Tất cả</option><option value="DRAFT">Nháp</option>
+                        <option value="PENDING">Chờ duyệt</option><option value="APPROVED">Đã duyệt</option>
+                        <option value="REJECTED">Từ chối</option></select></div>
+                <div class="acc-field"><label>Loại phiếu</label>
+                    <select name="type"><option value="">Tất cả</option><option value="COUNT">Kiểm kê</option>
+                        <option value="ADJUSTMENT">Điều chỉnh lô</option></select></div>
+            </form>
+        </aside>
+
+        <main class="staff-main">
+          <div id="listView">
+            <div class="acc-title">
+                <h1><span class="title-icon"><svg viewBox="0 0 24 24"><path d="M9 2h6v2h4v18H5V4h4V2Zm0 4H7v14h10V6h-2v2H9V6Zm1.5 8.6 4.6-4.6 1.4 1.4-6 6-3.5-3.5 1.4-1.4 2.1 2.1Z"/></svg></span>
+                    Phiếu kiểm kê</h1>
+                <div class="title-actions">
+                    <a class="btn-big light" href="kho-hang.html">
+                        <svg viewBox="0 0 24 24"><path d="M11 6v12l-8.5-6L11 6Zm9 0v12l-8.5-6L20 6Z"/></svg> Kho hàng</a>
+                    <button type="button" class="btn-big primary" id="btnCreate">
+                        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2Z"/></svg> TẠO PHIẾU KIỂM KÊ</button>
+                </div>
+            </div>
+            <div class="staff-table-wrap" id="tableBox"></div>
+          </div>
+
+          <!-- UC118, UC121, UC119, UC122, UC123 -->
+          <div id="editView" hidden>
+            <div class="acc-title"><h1 id="countTitle">Phiếu kiểm kê</h1>
+                <div class="title-actions"><button type="button" class="btn-big warn" id="btnBack">
+                    <svg viewBox="0 0 24 24"><path d="M11 6v12l-8.5-6L11 6Zm9 0v12l-8.5-6L20 6Z"/></svg> Thoát</button></div>
+            </div>
+            <div class="count-head acc-panel" id="countHead"></div>
+            <div class="staff-table-wrap" id="lineBox"></div>
+            <div class="count-bar" id="countBar"></div>
+          </div>
+        </main>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div id="toastRoot" class="toast-root"></div>
+    <script src="../../assets/js/shared.js?v=20261119g"></script>
+    <script src="../../assets/js/hieulnmth08470-kho.js?v=20261119g"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../assets/css/shared.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530-tai-khoan.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/hieulnmth08470-kho.css?v=20261119g">
+    <title>Kho hàng - Quản lý bán hàng</title>
+</head>
+<body data-page="stock">
+    <div id="header"></div>
+
+    <!-- Tồn kho UC105–UC116 — Lê Nguyễn Minh Hiếu -->
+    <div class="staff-layout">
+        <aside class="staff-side">
+            <div class="side-title"><svg viewBox="0 0 24 24"><path d="M3 5h2v2H3V5Zm4 0h14v2H7V5ZM3 11h2v2H3v-2Zm4 0h14v2H7v-2Zm-4 6h2v2H3v-2Zm4 0h14v2H7v-2Z"/></svg> TÌM KIẾM</div>
+
+            <!-- UC106, UC107 -->
+            <form id="packageFilter" data-tab="packages">
+                <div class="acc-field"><input name="keyword" type="search" placeholder="SKU, tên sản phẩm, biến thể"></div>
+                <div class="acc-field"><label>Trạng thái tồn</label>
+                    <select name="stockStatus"><option value="">Tất cả</option><option value="OUT_OF_STOCK">Hết hàng</option>
+                        <option value="LOW_STOCK">Tồn thấp</option><option value="IN_STOCK">Còn hàng</option></select></div>
+            </form>
+
+            <!-- UC109 -->
+            <form id="lotFilter" data-tab="lots" hidden>
+                <div class="acc-field"><input name="keyword" type="search" placeholder="Mã lô hoặc SKU"></div>
+                <div class="acc-field"><label>Hạn sử dụng</label>
+                    <select name="expiryStatus"><option value="">Tất cả</option><option value="EXPIRED">Đã hết hạn</option>
+                        <option value="NEAR_EXPIRY">Cận hạn</option><option value="VALID">Còn hạn</option></select></div>
+                <div class="acc-field"><label>Hết hạn từ ngày</label><input name="from" type="date"></div>
+                <div class="acc-field"><label>Đến ngày</label><input name="to" type="date"></div>
+                <input type="hidden" name="packageId">
+            </form>
+
+            <!-- UC111 -->
+            <form id="movementFilter" data-tab="movements" hidden>
+                <div class="acc-field"><label>Từ ngày</label><input name="from" type="date"></div>
+                <div class="acc-field"><label>Đến ngày</label><input name="to" type="date"></div>
+                <input type="hidden" name="lotId"><input type="hidden" name="packageId">
+                <span class="acc-hint">Mở "Lịch sử" ở một gói hoặc một lô để xem riêng gói / lô đó.</span>
+            </form>
+
+            <!-- UC114 -->
+            <form id="disposalFilter" data-tab="disposals" hidden>
+                <div class="acc-field"><label>Ngày xuất từ</label><input name="from" type="date"></div>
+                <div class="acc-field"><label>Đến ngày</label><input name="to" type="date"></div>
+            </form>
+        </aside>
+
+        <main class="staff-main">
+            <div class="acc-title">
+                <h1><span class="title-icon"><svg viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3L18.6 8 12 11.7 5.4 8 12 4.3ZM5 9.7l6 3.4v6.6l-6-3.3V9.7Zm8 10v-6.6l6-3.4v6.7l-6 3.3Z"/></svg></span>
+                    Kho hàng</h1>
+                <div class="title-actions">
+                    <a class="btn-big light" href="kiem-ke.html">
+                        <svg viewBox="0 0 24 24"><path d="M9 2h6v2h4v18H5V4h4V2Zm0 4H7v14h10V6h-2v2H9V6Zm1.5 8.6 4.6-4.6 1.4 1.4-6 6-3.5-3.5 1.4-1.4 2.1 2.1Z"/></svg> Kiểm kê</a>
+                    <button type="button" class="btn-big light" id="btnSettings" hidden>
+                        <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8.4 5.5.1-1.5-.1-1.5 2.1-1.6-2-3.5-2.5 1a8 8 0 0 0-2.6-1.5L15 2h-4l-.4 2.6A8 8 0 0 0 8 6.1l-2.5-1-2 3.5L5.6 10.2 5.5 12l.1 1.5-2.1 1.6 2 3.5 2.5-1a8 8 0 0 0 2.6 1.5L11 22h4l.4-2.6a8 8 0 0 0 2.6-1.5l2.5 1 2-3.5-2.1-1.6Z"/></svg> Ngưỡng cận hạn</button>
+                </div>
+            </div>
+
+            <!-- Ô thống kê theo trạng thái tồn (UC107) -->
+            <div class="stock-tiles" id="tiles"></div>
+
+            <div class="staff-tabs" id="mainTabs">
+                <button type="button" class="active" data-tab="packages">Tồn theo gói</button>
+                <button type="button" data-tab="lots">Lô hàng</button>
+                <button type="button" data-tab="movements">Lịch sử biến động</button>
+                <button type="button" data-tab="disposals">Xuất hủy lô hết hạn</button>
+            </div>
+            <div id="chipBox"></div>
+            <div id="expiredBox"></div>
+            <div class="staff-table-wrap" id="tableBox"></div>
+        </main>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div id="toastRoot" class="toast-root"></div>
+    <script src="../../assets/js/shared.js?v=20261119g"></script>
+    <script src="../../assets/js/hieulnmth08470-kho.js?v=20261119g"></script>
+</body>
+</html>

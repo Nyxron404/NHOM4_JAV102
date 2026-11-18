@@ -270,3 +270,6 @@ a.logo:hover {
   font-size: 13px;
   margin-top: 3px;
 }
+
+/* Chuông thông báo ẩn với nhân viên / khi không có thông báo chưa đọc */
+.notify[hidden], .notify-count[hidden] { display: none !important; }

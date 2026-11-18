@@ -4,6 +4,8 @@ const HOME_URL = new URL("../../index.html", document.currentScript.src).href;
 const PROFILE_URL = new URL("../../pages/minhpvth08530/ho-so.html", document.currentScript.src).href;
 const LOGIN_URL = new URL("../../pages/minhpvth08530/dang-nhap.html", document.currentScript.src).href;
 const AUTH_API = new URL("../../api/auth", document.currentScript.src).href;
+const NOTIFY_URL = new URL("../../pages/hieulnmth08470/thong-bao.html", document.currentScript.src).href;
+const NOTIFY_API = new URL("../../api/thong-bao", document.currentScript.src).href;
 
 function renderHeader() {
     const header = `<!-- HEADER -->
@@ -11,10 +13,10 @@ function renderHeader() {
         <a href="${HOME_URL}" class="logo" title="Về trang chủ"><img src="${LOGO_SRC}" alt="VCR Roastery"> VIETNAM COFFEE ROASTERY</a>
 
         <div class="header-right">
-            <!-- Thông báo -->
-            <a href="thong-bao.html" class="notify">
+            <!-- Thông báo (UC127): số chưa đọc lấy từ /api/thong-bao, chỉ hiện cho chủ cửa hàng -->
+            <a href="${NOTIFY_URL}" class="notify" id="notifyBell" title="Thông báo" hidden>
                 🔔
-                <span class="notify-count">2</span>
+                <span class="notify-count" id="notifyCount" hidden>0</span>
             </a>
 
             <!-- Tài khoản -->
@@ -71,6 +73,28 @@ async function refreshHeaderUser() {
 }
 window.refreshHeaderUser = refreshHeaderUser;
 if (document.getElementById("header")) refreshHeaderUser();
+
+// Chuông thông báo: số thông báo kho chưa đọc (phần Lê Nguyễn Minh Hiếu, UC127)
+async function refreshNotifyCount() {
+    const bell = document.getElementById("notifyBell");
+    const count = document.getElementById("notifyCount");
+    if (!bell) return;
+    try {
+        const response = await fetch(NOTIFY_API + "?view=count", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        bell.hidden = !data.canView;
+        count.hidden = !data.unread;
+        count.textContent = data.unread > 99 ? "99+" : data.unread;
+    } catch (e) {
+        // không có mạng thì giữ nguyên
+    }
+}
+window.refreshNotifyCount = refreshNotifyCount;
+if (document.getElementById("header")) {
+    refreshNotifyCount();
+    setInterval(refreshNotifyCount, 60000);
+}
 
 // Đăng xuất (UC2): đóng phiên trên server rồi về trang đăng nhập
 function logout(event) {
