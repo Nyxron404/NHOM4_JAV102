@@ -9,17 +9,28 @@
   </head>
   <body>
     <div id="header"></div>
-    <div id="home"></div>
+
 
     <!--
       TRANG BÁN HÀNG TẠI QUẦY (longdtta00178) — HTML TĨNH, dữ liệu mẫu khớp sql/seed_sales_test.sql
-      - 2 màn: #ban-hang (mặc định) và #hoa-don (tra cứu hóa đơn). Đang đổi màn bằng link #id + CSS :target;
+      - Đang đổi màn bằng link #id + CSS :target;
         khi viết JS có thể thay bằng thêm/bỏ class "show".
       - Hộp thoại (modal) cũng mở bằng link #id. Đóng = link về #ban-hang hoặc #hoa-don.
       - Không có khách hàng, giảm giá: hệ thống bán tại quầy, không quản lý khách, DB không có bảng/cột này.
     -->
     <div class="page">
-
+            <!-- Tiêu đề trang + điều hướng -->
+      <div class="page-hero">
+        <div class="hero-icon">🛒</div>
+        <div class="hero-text">
+          <div class="hero-title">Bán hàng tại quầy</div>
+          <div class="hero-sub">Chọn gói cà phê, thu tiền và xác nhận đơn · tự trừ kho theo lô hạn gần nhất</div>
+        </div>
+      </div>
+      <div class="page-nav">
+        <a href="../index.html" class="nav-btn">🏠 Trang chủ</a>
+        <a href="longdtta001782.html" class="nav-btn">🧾 Hóa đơn</a>
+      </div>
       <!-- ===================================================================
            MÀN 1: BÁN HÀNG (UC 130–143)
            =================================================================== -->
