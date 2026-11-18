@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../assets/css/shared.css?v=20261119e">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530.css?v=20261119e">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530-tai-khoan.css?v=20261119e">
+    <title>Quản lý nhân viên - Quản lý bán hàng</title>
+</head>
+<body data-page="accounts">
+    <div id="header"></div>
+
+    <!-- Quản lý nhân viên / tài khoản UC8–UC17 (chỉ chủ cửa hàng) — Phạm Văn Minh -->
+    <div class="staff-layout">
+        <!-- Cột trái: tìm kiếm và lọc (đổi theo tab đang xem) -->
+        <aside class="staff-side">
+            <div class="side-title"><svg viewBox="0 0 24 24"><path d="M3 5h2v2H3V5Zm4 0h14v2H7V5ZM3 11h2v2H3v-2Zm4 0h14v2H7v-2Zm-4 6h2v2H3v-2Zm4 0h14v2H7v-2Z"/></svg> TÌM KIẾM</div>
+
+            <form id="userFilter">
+                <div class="acc-field"><input name="keyword" type="search" placeholder="Tìm kiếm"></div>
+                <div class="acc-field"><label>Vai trò</label><select name="roleId" id="roleFilter"><option value="">Tất cả</option></select></div>
+                <div class="acc-field"><label>Trạng thái</label>
+                    <select name="status"><option value="">Tất cả</option><option value="ACTIVE">Cho phép đăng nhập</option><option value="LOCKED">Đã khóa</option></select></div>
+            </form>
+
+            <form id="loginFilter" hidden>
+                <div class="acc-field"><input name="keyword" type="search" placeholder="Tên đăng nhập"></div>
+                <div class="acc-field"><label>Kết quả</label>
+                    <select name="success"><option value="">Tất cả</option><option value="true">Thành công</option><option value="false">Thất bại</option></select></div>
+                <div class="acc-field"><label>Từ ngày</label><input name="from" type="date"></div>
+                <div class="acc-field"><label>Đến ngày</label><input name="to" type="date"></div>
+                <input type="hidden" name="userId">
+                <div id="loginFilterNote"></div>
+            </form>
+
+            <form id="emailFilter" hidden>
+                <div class="acc-field"><input name="keyword" type="search" placeholder="Email nhận"></div>
+                <div class="acc-field"><label>Trạng thái</label>
+                    <select name="status"><option value="">Tất cả</option><option value="SENT">Đã gửi</option><option value="FAILED">Lỗi</option></select></div>
+                <div class="acc-field"><label>Loại email</label><select name="template" id="templateFilter"><option value="">Tất cả</option></select></div>
+                <div class="acc-field"><label>Từ ngày</label><input name="from" type="date"></div>
+                <div class="acc-field"><label>Đến ngày</label><input name="to" type="date"></div>
+            </form>
+        </aside>
+
+        <!-- Cột phải: bảng -->
+        <main class="staff-main">
+          <div id="listView">
+            <div class="acc-title">
+                <h1><span class="title-icon"><svg viewBox="0 0 24 24"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4Z"/></svg></span>
+                    <span id="pageTitle">Quản lý nhân viên</span></h1>
+                <button class="btn-big primary" id="btnAddUser">
+                    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2Z"/></svg> THÊM MỚI NHÂN VIÊN</button>
+            </div>
+            <div class="staff-tabs" id="mainTabs">
+                <button type="button" class="active" data-tab="users">Nhân viên</button>
+                <button type="button" data-tab="logins">Lịch sử đăng nhập</button>
+                <button type="button" data-tab="emails">Nhật ký gửi email</button>
+            </div>
+            <div class="staff-table-wrap" id="tableBox"></div>
+          </div>
+
+          <!-- Form Thêm mới / Cập nhật nhân viên (UC10, UC11 + khóa/mở khóa, đặt mật khẩu, phân quyền) -->
+          <div id="editView" hidden>
+            <div class="acc-title"><h1 id="editTitle">Cập nhật nhân viên</h1></div>
+            <form class="acc-panel staff-form" id="staffForm" novalidate autocomplete="off">
+                <div class="acc-error" id="staffError"></div>
+                <div class="acc-form">
+                    <div class="acc-col">
+                        <div class="acc-field"><label>Tên đăng nhập <span class="req">*</span></label>
+                            <input name="username" maxlength="50" autocomplete="off" placeholder="VD: quay02">
+                            <span class="acc-hint">3–50 ký tự: chữ thường không dấu, số, _ và .</span></div>
+                        <div class="acc-field"><label>Mật khẩu <span class="req" id="pwReq">*</span></label>
+                            <div class="eye-input"><input name="password" type="password" autocomplete="new-password">
+                                <button type="button" data-eye title="Hiện/ẩn mật khẩu"></button></div>
+                            <ul class="pw-rules" data-rules-for="password">
+                                <li data-rule="length">Tối thiểu 8 ký tự</li>
+                                <li data-rule="mix">Có cả chữ và số</li>
+                            </ul>
+                            <span class="acc-hint" id="pwHint">Để trống nếu không đổi mật khẩu</span></div>
+                        <div class="acc-field"><label>Nhập lại mật khẩu</label>
+                            <div class="eye-input"><input name="confirmPassword" type="password" autocomplete="new-password">
+                                <button type="button" data-eye title="Hiện/ẩn mật khẩu"></button></div></div>
+                    </div>
+                    <div class="acc-col">
+                        <div class="acc-field"><label>Tên <span class="req">*</span></label>
+                            <input name="fullName" maxlength="200"></div>
+                        <div class="acc-field"><label>Email</label>
+                            <input name="email" type="email" maxlength="255" placeholder="Email"></div>
+                        <div class="acc-field"><label>Điện thoại</label>
+                            <input name="phone" maxlength="15" placeholder="Điện thoại"></div>
+                        <label class="acc-check"><input type="checkbox" name="active"> Cho phép đăng nhập?</label>
+                        <label class="acc-check"><input type="checkbox" name="manager"> Quyền admin/chủ cửa hàng?</label>
+                        <span class="acc-hint" id="selfHint" hidden>Bạn không thể tự bỏ quyền đăng nhập hoặc quyền admin của chính mình.</span>
+                    </div>
+                </div>
+                <div class="acc-actions">
+                    <button type="button" class="btn-big warn" id="btnExit">
+                        <svg viewBox="0 0 24 24"><path d="M11 6v12l-8.5-6L11 6Zm9 0v12l-8.5-6L20 6Z"/></svg> Thoát</button>
+                    <button type="submit" class="btn-big primary">
+                        <svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4Zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm3-10H5V5h10v4Z"/></svg> Lưu</button>
+                </div>
+            </form>
+          </div>
+        </main>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div id="toastRoot" class="toast-root"></div>
+    <script src="../../assets/js/shared.js?v=20261119e"></script>
+    <script src="../../assets/js/minhpvth08530-tai-khoan.js?v=20261119f"></script>
+</body>
+</html>
