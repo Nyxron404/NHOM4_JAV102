@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../assets/css/shared.css" />
+    <link rel="stylesheet" href="../assets/css/longdtta00178.css" />
+    <title>Hóa đơn bán hàng</title>
+  </head>
+  <body>
+    <div id="header"></div>
+    <div id="home"></div>
+
+    <!--
+      TRANG HÓA ĐƠN (longdtta00178): tra cứu, xem chi tiết, in lại, hủy đơn đã xác nhận
+      UC 147 in lại, 148–152 danh sách + lọc, 153 chi tiết, 154 hủy đơn đã xác nhận.
+      HTML tĩnh, dữ liệu mẫu khớp sql/seed_sales_test.sql. Hộp thoại mở bằng link #id, đóng bằng link "#".
+    -->
+    <div class="page">
+      <div class="page-head">
+        <div class="page-title">🧾 Hóa đơn bán hàng</div>
+        <a href="longdtta00178.html" class="btn">🛒 Sang trang bán hàng</a>
+      </div>
+
+      <!-- Bộ lọc: mã HĐ (149), khoảng ngày (150), phương thức (151), trạng thái (152) -->
+      <div class="panel filter-bar">
+        <div class="field field-grow">
+          <label>Mã hóa đơn</label>
+          <input type="text" placeholder="VD: HD261116-0001" />
+        </div>
+        <div class="field">
+          <label>Từ ngày</label>
+          <input type="date" value="2026-11-16" />
+        </div>
+        <div class="field">
+          <label>Đến ngày</label>
+          <input type="date" value="2026-11-18" />
+        </div>
+        <div class="field">
+          <label>Thanh toán</label>
+          <!-- nguồn: payment_methods -->
+          <select>
+            <option>Tất cả</option>
+            <option>Tiền mặt</option>
+            <option>VNPay</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Trạng thái</label>
+          <select>
+            <option>Tất cả</option>
+            <option>Chờ thanh toán</option>
+            <option>Đã xác nhận</option>
+            <option>Đã hủy</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary">Lọc</button>
+          <button class="btn">Xóa lọc</button>
+        </div>
+      </div>
+
+      <div class="inv-layout">
+        <!-- Danh sách hóa đơn (148) -->
+        <div class="panel inv-list">
+          <div class="list-head">
+            <span><b>3</b> hóa đơn · 16/11/2026 – 18/11/2026</span>
+            <span class="muted">Mới nhất trước</span>
+          </div>
+          <table class="table">
+            <tr>
+              <th>Mã hóa đơn</th>
+              <th>Thời gian</th>
+              <th>Thu ngân</th>
+              <th class="num">Tổng tiền</th>
+              <th>Thanh toán</th>
+              <th>Trạng thái</th>
+            </tr>
+            <tr>
+              <td><a href="#" class="link">HD261118-0002</a></td>
+              <td>18/11/2026 01:30</td>
+              <td>Quầy 01</td>
+              <td class="num">370.000đ</td>
+              <td class="muted">—</td>
+              <td><span class="status status-pending">Chờ thanh toán</span></td>
+            </tr>
+            <tr>
+              <td><a href="#" class="link">HD261117-0002</a></td>
+              <td>17/11/2026 10:40</td>
+              <td>Quầy 01</td>
+              <td class="num">320.000đ</td>
+              <td>Tiền mặt</td>
+              <td><span class="status status-cancel">Đã hủy</span> <span class="sub">Đã hoàn kho</span></td>
+            </tr>
+            <tr class="row-selected">
+              <td><a href="#" class="link">HD261116-0001</a></td>
+              <td>16/11/2026 14:25</td>
+              <td>Quầy 01</td>
+              <td class="num">470.000đ</td>
+              <td>Tiền mặt</td>
+              <td><span class="status status-paid">Đã xác nhận</span></td>
+            </tr>
+          </table>
+          <div class="pager">
+            <button class="btn btn-sm" disabled>‹ Trước</button>
+            <span>Trang 1 / 1</span>
+            <button class="btn btn-sm" disabled>Sau ›</button>
+          </div>
+        </div>
+
+        <!-- Chi tiết hóa đơn đang chọn (153) = C4 + C5 + C9 + C7 -->
+        <div class="panel inv-detail">
+          <div class="detail-head">
+            <div>
+              <div class="detail-no">HD261116-0001</div>
+              <div class="muted">16/11/2026 14:25 · Thu ngân: Quầy 01</div>
+            </div>
+            <span class="status status-paid">Đã xác nhận</span>
+          </div>
+
+          <div class="section-title">Hàng đã bán</div>
+          <table class="table table-sm">
+            <tr>
+              <th>Gói</th>
+              <th class="num">SL</th>
+              <th class="num">Đơn giá</th>
+              <th class="num">Thành tiền</th>
+            </tr>
+            <tr>
+              <td>Robusta Honey<div class="sub">250g · Nguyên hạt · FR-CUMGAR-HN-250-WB</div></td>
+              <td class="num">2</td>
+              <td class="num">120.000đ</td>
+              <td class="num">240.000đ</td>
+            </tr>
+            <tr>
+              <td>Moka Cầu Đất Washed<div class="sub">250g · Nguyên hạt · CD-MOKA-WS-250-WB</div></td>
+              <td class="num">1</td>
+              <td class="num">230.000đ</td>
+              <td class="num">230.000đ</td>
+            </tr>
+            <tr class="row-total">
+              <td colspan="3">Tổng tiền</td>
+              <td class="num">470.000đ</td>
+            </tr>
+          </table>
+
+          <div class="section-title">Thanh toán</div>
+          <div class="kv"><span>Tiền mặt · xác nhận bởi Quầy 01 · 14:26</span><b>470.000đ</b></div>
+          <div class="kv"><span>Đã thu</span><b>470.000đ</b></div>
+
+          <div class="section-title">Lô đã trừ (FEFO)</div>
+          <table class="table table-sm">
+            <tr>
+              <th>Lô</th>
+              <th>Hạn dùng</th>
+              <th class="num">SL</th>
+            </tr>
+            <tr>
+              <td>L251208-FR-CUMGAR-HN-250-WB <span class="tag-near">Cận hạn</span></td>
+              <td>08/12/2026</td>
+              <td class="num">2</td>
+            </tr>
+            <tr>
+              <td>L261108-CD-MOKA-WS-250-WB</td>
+              <td>08/11/2027</td>
+              <td class="num">1</td>
+            </tr>
+          </table>
+
+          <div class="detail-actions">
+            <a href="#modal-bill" class="btn">🖨 In lại hóa đơn</a>
+            <span class="muted">Đã in lại 0 lần</span>
+          </div>
+
+          <!-- Hủy đơn đã xác nhận (154): chỉ chủ cửa hàng; hoàn kho (156/158), trừ tiền (157) do chủ quyết -->
+          <div class="owner-box">
+            <div class="owner-title">🔒 Hủy đơn đã xác nhận <span class="sub">Chỉ tài khoản chủ cửa hàng</span></div>
+            <div class="field">
+              <label>Lý do hủy</label>
+              <input type="text" placeholder="VD: Khách trả hàng do bao bì rách" />
+            </div>
+            <label class="check"><input type="checkbox" checked /> Hoàn kho về đúng lô đã trừ (3 túi)</label>
+            <label class="check"><input type="checkbox" /> Trừ tiền: ghi khoản hoàn 470.000đ vào thu chi</label>
+            <button class="btn btn-danger">Hủy đơn</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- In lại hóa đơn (147). Thông tin cửa hàng: system_settings invoice.* -->
+      <div id="modal-bill" class="modal">
+        <div class="modal-box modal-bill">
+          <div class="modal-head">
+            <span>Xem trước hóa đơn</span>
+            <a href="#" class="icon-btn">✕</a>
+          </div>
+          <div class="bill">
+            <div class="bill-center">
+              <div class="bill-store">NHÓM 4 COFFEE</div>
+              <div>12 Lê Lợi, Quận 1, TP.HCM</div>
+              <div>ĐT: 0283 999 1234</div>
+              <div class="bill-title">HÓA ĐƠN BÁN HÀNG</div>
+              <div>(BẢN IN LẠI lần 1)</div>
+              <div>Số: HD261116-0001</div>
+              <div>16/11/2026 14:25 · Thu ngân: Quầy 01</div>
+            </div>
+            <div class="bill-line"></div>
+            <div class="bill-item">
+              <div>Robusta Honey 250g nguyên hạt</div>
+              <div class="kv"><span>2 x 120.000</span><span>240.000</span></div>
+            </div>
+            <div class="bill-item">
+              <div>Moka Cầu Đất Washed 250g nguyên hạt</div>
+              <div class="kv"><span>1 x 230.000</span><span>230.000</span></div>
+            </div>
+            <div class="bill-line"></div>
+            <div class="kv kv-total"><span>TỔNG CỘNG</span><span>470.000đ</span></div>
+            <div class="kv"><span>Tiền mặt</span><span>470.000đ</span></div>
+            <div class="bill-line"></div>
+            <div class="bill-center">Cảm ơn quý khách!<br />Quét mã QR trên túi để xem thông tin cà phê.</div>
+          </div>
+          <div class="modal-actions">
+            <a href="#" class="btn">Đóng</a>
+            <button class="btn btn-primary">🖨 In</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../assets/js/shared.js"></script>
+  </body>
+</html>

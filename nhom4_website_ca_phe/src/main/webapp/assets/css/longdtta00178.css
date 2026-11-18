@@ -56,42 +56,18 @@ select:focus {
     border-radius: 12px;
 }
 
-/* ===== ĐỔI MÀN (CSS :target) ===== */
-.view-invoices {
-    display: none;
-}
-
-.view-invoices:target {
-    display: block;
-}
-
-.view-invoices:target ~ .view-pos {
-    display: none;
-}
-
-/* ===== TAB ===== */
-.tabs {
+/* ===== TIÊU ĐỀ TRANG ===== */
+.page-head {
     display: flex;
-    gap: 6px;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 14px;
-    border-bottom: 1px solid #EAE2D6;
 }
 
-.tab {
-    padding: 10px 18px;
+.page-title {
+    font-size: 22px;
     font-weight: bold;
-    color: #8C7B6E;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -1px;
-}
-
-.tab:hover {
     color: #2C1E16;
-}
-
-.tab.active {
-    color: #8B5A2B;
-    border-bottom-color: #D97706;
 }
 
 /* ===== NÚT ===== */
