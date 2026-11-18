@@ -1,7 +1,11 @@
+// Đường dẫn logo và trang chủ tính theo vị trí file shared.js (dùng được cho cả index.html và pages/*.html)
+const LOGO_SRC = new URL("../img/logo.png", document.currentScript.src).href;
+const HOME_URL = new URL("../../index.html", document.currentScript.src).href;
+
 function renderHeader() {
     const header = `<!-- HEADER -->
     <header class="header">
-        <div class="logo"><img src="https://res.cloudinary.com/v8tued67/image/upload/v1794839228/Gemini_Generated_Image_p421a8p421a8p421_1.png"> Tung Tung Tung Robusta</div>
+        <a href="${HOME_URL}" class="logo" title="Về trang chủ"><img src="${LOGO_SRC}" alt="VCR Roastery"> VIETNAM COFFEE ROASTERY</a>
 
         <div class="header-right">
             <!-- Thông báo -->
@@ -45,6 +49,19 @@ function renderHeader() {
     if (el) el.innerHTML = header;   // trang nào không có <div id="header"> thì bỏ qua
 }
 renderHeader();
+
+// Mở/đóng menu "Tài khoản". Trang nào đã tự viết toggleMenu thì giữ nguyên bản của trang đó;
+// các trang chưa có (Bán hàng, Hóa đơn) thì dùng bản này để bấm "Tài khoản" không bị lỗi.
+if (typeof window.toggleMenu !== "function") {
+    window.toggleMenu = function () {
+        const menu = document.getElementById("accountMenu");
+        if (menu) menu.classList.toggle("show");
+    };
+    window.addEventListener("click", function (e) {
+        const menu = document.getElementById("accountMenu");
+        if (menu && !e.target.closest(".account")) menu.classList.remove("show");
+    });
+}
 function renderHome() {
     const home = `<!-- Nút về trang chủ -->
       <div class="home-bar">

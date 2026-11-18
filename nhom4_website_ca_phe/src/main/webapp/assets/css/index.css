@@ -1,59 +1,105 @@
-/* ===== NỘI DUNG CHÍNH ===== */
-.main {
-  max-width: 1000px;
-  margin: 50px auto;
-  padding: 0 20px;
+/* ===== THANH TIÊU ĐỀ (dải ngang dưới header) ===== */
+.title-bar {
+  background-color: #ffffff;
+  border-bottom: 1px solid #eae2d6;
+  padding: 18px 40px;
 }
 
-.title {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.title h1 {
-  font-size: 28px;
-  margin-bottom: 8px;
-}
-
-.title p {
+.title-bar h1 {
+  font-size: 22px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: #8b5a2b;
 }
 
-/* Lưới 3 cột */
+/* ===== NỘI DUNG CHÍNH ===== */
+.main {
+  padding: 24px 40px 40px;
+}
+
+/* Lưới ô liền nhau, ngăn bằng đường kẻ mảnh */
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 25px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background-color: #eae2d6;      /* màu đường kẻ giữa các ô */
+  border: 1px solid #eae2d6;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Ô trống cuối lưới (7 ô trên lưới 4 cột) */
+.menu-grid::after {
+  content: "";
+  background-color: #ffffff;
 }
 
 .card {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 18px;
   background-color: #ffffff;
-  border: 1px solid #eae2d6;
-  border-radius: 12px;
-  padding: 30px 20px;
-  text-align: center;
+  padding: 24px 22px;
+  min-height: 120px;
   transition: 0.2s;
 }
 
 .card:hover {
-  border-color: #d97706;
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.15);
+  background-color: #fffaf3;
+  box-shadow: inset 0 -3px 0 #d97706;
 }
 
+/* Icon nằm trong vòng tròn nâu */
 .card-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: #8b5a2b;
+  font-size: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.card:hover .card-icon {
+  background-color: #d97706;
 }
 
 .card-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: bold;
-  margin-bottom: 8px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
 }
 
 .card-desc {
   font-size: 14px;
   color: #8b5a2b;
+  line-height: 1.4;
+}
+
+/* ===== MÀN HÌNH NHỎ ===== */
+@media (max-width: 1100px) {
+  .menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .title-bar,
+  .main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-grid::after {
+    display: none;
+  }
 }
