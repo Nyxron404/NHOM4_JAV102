@@ -306,7 +306,10 @@ function showReprint() {
 
     document.getElementById("billStore").textContent = (storeInfo.storeName || "").toUpperCase();
     document.getElementById("billAddress").textContent = storeInfo.address || "";
-    document.getElementById("billPhone").textContent = storeInfo.phone ? "ĐT: " + storeInfo.phone : "";
+        document.getElementById("billPhone").textContent = [
+        storeInfo.phone ? "ĐT: " + storeInfo.phone : "",
+        storeInfo.taxCode ? "MST: " + storeInfo.taxCode : ""
+    ].filter(Boolean).join(" · ");
     document.getElementById("billReprint").textContent = "(BẢN IN LẠI lần " + (extra.reprintCount + 1) + ")"
         + (inv.status === "CANCELLED" ? " - ĐÃ HỦY" : "");
     document.getElementById("billNo").textContent = "Số: " + inv.invoiceNo;

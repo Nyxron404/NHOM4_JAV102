@@ -182,8 +182,24 @@ public class VnpayDAO {
                     code = "01";
                 } else if (!amountMatches(params.get("vnp_Amount"), amount)) {
                     code = "04";
-                } else if (!"PENDING".equals(status)) {
+                                } else if (!"PENDING".equals(status)) {
                     code = "02";
+                    // [162] Khách trả bằng QR đã bị hủy / đóng: lưu kết quả cổng để chủ xử lý ở trang cấu hình
+                    if (!"SUCCESS".equals(status) && "00".equals(params.get("vnp_ResponseCode"))
+                            && "00".equals(params.get("vnp_TransactionStatus"))) {
+                        try (PreparedStatement ps = con.prepareStatement("""
+                                UPDATE payment_gateway_transactions
+                                SET gateway_txn_no = ?, bank_code = ?, response_code = ?, pay_date = ?
+                                WHERE payment_id = ? AND response_code IS NULL
+                                """)) {
+                            ps.setString(1, params.get("vnp_TransactionNo"));
+                            ps.setString(2, params.get("vnp_BankCode"));
+                            ps.setString(3, params.get("vnp_ResponseCode"));
+                            ps.setObject(4, parsePayDate(params.get("vnp_PayDate")));
+                            ps.setLong(5, paymentId);
+                            ps.executeUpdate();
+                        }
+                    }
                 } else {
                     code = "00";
                     boolean success = "00".equals(params.get("vnp_ResponseCode"))
