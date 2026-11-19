@@ -16,14 +16,6 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Chặn truy cập khi chưa đăng nhập (UC1).
- * <ul>
- *   <li>Trang đăng nhập, ảnh/CSS/JS và /api/auth luôn mở.</li>
- *   <li>Chưa đăng nhập: trang web chuyển về trang đăng nhập (kèm ?next= để quay lại), API trả 401.</li>
- *   <li>Trang quản lý tài khoản và /api/accounts chỉ cho tài khoản có quyền USER_MANAGE.</li>
- * </ul>
- */
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
@@ -67,9 +59,9 @@ public class AuthFilter implements Filter {
     private static boolean isPublic(String path) {
         return path.equals(LOGIN_PAGE)
                 || path.startsWith("/assets/")
+                || path.startsWith("/khach/") // <--- MỞ CỬA CHO PHÉP TRUY CẬP KHÔNG CẦN ĐĂNG NHẬP
                 || path.equals("/api/auth")
-                                || path.equals("/favicon.ico")
-                // VNPay: có kiểm chữ ký HMAC, không cần đăng nhập
+                || path.equals("/favicon.ico")
                 || path.equals("/api/vnpay/ipn")
                 || path.equals("/api/vnpay/return")
                 || path.equals("/mock-vnpay/pay")

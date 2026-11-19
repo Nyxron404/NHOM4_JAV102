@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thông tin sản phẩm cà phê</title>
+  <script>
+    (function () {
+      var m = location.pathname.match(/^(.*?)\/p(\/|$)/);
+      document.write('<base href="' + ((m ? m[1] : '') + '/') + '">');
+    })();
+  </script>
+  <style>
+    :root { --kh-brown:#6b4423; --kh-accent:#d97706; --kh-bg:#faf7f2; --kh-card:#fff; --kh-line:#eadfce; --kh-text:#2c1e16; --kh-muted:#7a6a5c; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:Arial,sans-serif; background:var(--kh-bg); color:var(--kh-text); line-height:1.5; }
+    [hidden] { display:none !important; }
+    .kh-header { background:var(--kh-brown); color:#fff; padding:14px 16px; border-bottom:3px solid var(--kh-accent); }
+    .kh-brand { font-weight:bold; font-size:18px; }
+    .kh-sub { font-size:12px; opacity:.85; }
+    .kh-main { max-width:760px; margin:0 auto; padding:14px; }
+    .kh-footer { text-align:center; color:var(--kh-muted); font-size:12px; padding:20px; }
+    .kh-card { background:var(--kh-card); border:1px solid var(--kh-line); border-radius:12px; padding:16px; margin-bottom:14px; }
+    .kh-card h1 { font-size:22px; }
+    .kh-card h2 { font-size:16px; color:var(--kh-brown); margin-bottom:8px; }
+    .kh-muted { color:var(--kh-muted); font-size:14px; }
+    .kh-state { text-align:center; color:var(--kh-muted); padding:30px 0; }
+    .kh-note { font-size:13px; color:var(--kh-muted); margin-top:8px; }
+    .kh-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .kh-chip { border:1px solid var(--kh-line); background:#fff; border-radius:999px; padding:8px 14px; font-size:14px; cursor:pointer; color:var(--kh-text); }
+    .kh-chip.on { background:var(--kh-brown); color:#fff; border-color:var(--kh-brown); }
+    .kh-gallery { display:flex; gap:8px; overflow-x:auto; margin-top:10px; }
+    .kh-gallery img { height:180px; border-radius:10px; border:1px solid var(--kh-line); object-fit:cover; }
+    .kh-facts { display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin:6px 0; font-size:14px; }
+    .kh-facts dt { color:var(--kh-muted); font-size:12px; }
+    .kh-facts dd { font-weight:bold; }
+    .kh-score { display:grid; grid-template-columns:90px 1fr 24px; align-items:center; gap:8px; margin:6px 0; font-size:14px; }
+    .kh-bar { height:8px; background:#efe5d6; border-radius:99px; overflow:hidden; }
+    .kh-bar > i { display:block; height:100%; background:var(--kh-accent); }
+    .kh-notes { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+    .kh-notes span { background:#fdf0dc; color:#8a4b08; border-radius:999px; padding:4px 10px; font-size:13px; }
+    .kh-brewitem { border-top:1px solid var(--kh-line); padding:10px 0; }
+    .kh-brewitem:first-of-type { border-top:0; }
+    .kh-brewitem h3 { font-size:15px; }
+    .kh-brewitem .kh-facts { grid-template-columns:repeat(3,1fr); }
+    .kh-tablewrap { overflow-x:auto; }
+    .kh-table { border-collapse:collapse; width:100%; font-size:13px; min-width:520px; }
+    .kh-table th, .kh-table td { border:1px solid var(--kh-line); padding:6px 8px; text-align:left; vertical-align:top; }
+    .kh-table th { background:#f6ede0; }
+    .kh-table .cur { background:#fff6e6; }
+    .kh-error h2 { color:#b42318; }
+    .kh-report { margin-top:14px; display:grid; gap:8px; }
+    .kh-report textarea { width:100%; padding:8px; border:1px solid var(--kh-line); border-radius:8px; font:inherit; }
+    .kh-btn { background:var(--kh-brown); color:#fff; border:0; border-radius:8px; padding:10px 14px; font-size:15px; cursor:pointer; }
+    .kh-btn:disabled { opacity:.6; cursor:default; }
+    @media (min-width:600px) { .kh-main { padding:24px; } }
+  </style>
+</head>
+<body>
+  <header class="kh-header">
+    <div class="kh-brand">☕ Cà phê nguyên bản</div>
+    <div class="kh-sub" id="khProductCode"></div>
+  </header>
+
+  <main class="kh-main">
+    <p id="khLoading" class="kh-state">Đang tải thông tin sản phẩm…</p>
+
+    <section id="khError" class="kh-card kh-error" hidden>
+      <h2 id="khErrorTitle">Mã QR không hợp lệ</h2>
+      <p id="khErrorText"></p>
+      <form id="khReportForm" class="kh-report">
+        <label for="khReportNote">Báo cho chúng tôi (không bắt buộc)</label>
+        <textarea id="khReportNote" maxlength="500" rows="3" placeholder="Ví dụ: tem bị rách, quét ra trang lỗi…"></textarea>
+        <button type="submit" class="kh-btn">Báo mã QR không hợp lệ</button>
+        <p id="khReportResult" class="kh-note" role="status"></p>
+      </form>
+    </section>
+
+    <div id="khContent" hidden>
+      <section class="kh-card">
+        <h1 id="khProductName"></h1>
+        <p id="khProductDesc" class="kh-muted"></p>
+      </section>
+      <section class="kh-card" id="khPickerCard">
+        <h2>Chọn biến thể</h2>
+        <div id="khPicker" class="kh-chips"></div>
+      </section>
+      <section class="kh-card">
+        <h2 id="khVariantName"></h2>
+        <p class="kh-muted" id="khVariantMeta"></p>
+        <div id="khGallery" class="kh-gallery"></div>
+      </section>
+      <section class="kh-card" id="khRegion"></section>
+      <section class="kh-card" id="khVariety"></section>
+      <section class="kh-card" id="khProcess"></section>
+      <section class="kh-card" id="khRoast"></section>
+      <section class="kh-card" id="khFlavor"></section>
+      <section class="kh-card" id="khBrew"></section>
+      <section class="kh-card" id="khCompare"></section>
+    </div>
+  </main>
+
+  <footer class="kh-footer">Thông tin truy xuất nguồn gốc sản phẩm</footer>
+
+  <script>
+  (function () {
+    "use strict";
+    const m = location.pathname.match(/^(.*?)\/p(\/|$)/);
+    const token = m ? decodeURIComponent(location.pathname.slice(m[0].length).split("/")[0] || "") : "";
+    const $ = (id) => document.getElementById(id);
+    const state = { page: null, currentId: null };
+    const SCORES = [["aroma","Hương thơm"],["acidity","Độ chua"],["sweetness","Độ ngọt"],
+                    ["bitterness","Độ đắng"],["body","Độ đậm"],["aftertaste","Hậu vị"]];
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) =>
+        ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+    }
+    const dash = (v) => (v == null || v === "" ? "—" : esc(v));
+
+    async function load() {
+      if (!token) return showError({ code: "INVALID_QR", error: "Đường dẫn không chứa mã QR." });
+      try {
+        const res = await fetch("api/khach/san-pham?token=" + encodeURIComponent(token));
+        const body = await res.json();
+        if (!res.ok || !body.ok) return showError(body);
+        state.page = body.data;
+        state.currentId = body.data.defaultVariantId;
+        $("khLoading").hidden = true;
+        $("khContent").hidden = false;
+        renderAll();
+      } catch (e) {
+        showError({ code: "SERVER_ERROR", error: "Không kết nối được máy chủ, vui lòng thử lại." });
+      }
+    }
+
+    function showError(body) {
+      $("khLoading").hidden = true;
+      $("khContent").hidden = true;
+      $("khError").hidden = false;
+      const titles = { DISCONTINUED:"Sản phẩm đã ngừng kinh doanh", NO_VARIANT:"Chưa có thông tin sản phẩm",
+                       SERVER_ERROR:"Không tải được thông tin" };
+      $("khErrorTitle").textContent = titles[body.code] || "Mã QR không hợp lệ";
+      $("khErrorText").textContent = body.error || "Đã có lỗi xảy ra.";
+      $("khReportForm").hidden = body.code === "SERVER_ERROR";
+    }
+
+    $("khReportForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const btn = ev.target.querySelector("button");
+      const out = $("khReportResult");
+      btn.disabled = true;
+      try {
+        const form = new URLSearchParams({ token: token, note: $("khReportNote").value });
+        const res = await fetch("api/khach/bao-loi", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+          body: form,
+        });
+        const body = await res.json();
+        out.textContent = body.ok ? body.message : (body.error || "Chưa gửi được báo cáo.");
+        if (body.ok) $("khReportNote").value = ""; else btn.disabled = false;
+      } catch (e) {
+        out.textContent = "Chưa gửi được báo cáo, vui lòng thử lại.";
+        btn.disabled = false;
+      }
+    });
+
+    function current() {
+      return state.page.variants.find((v) => v.variantId === state.currentId) || state.page.variants[0];
+    }
+
+    function renderAll() {
+      const p = state.page.product;
+      $("khProductCode").textContent = p.productCode ? "Mã sản phẩm: " + p.productCode : "";
+      $("khProductName").textContent = p.productName;
+      $("khProductDesc").textContent = p.description || "";
+      document.title = p.productName + " - Thông tin sản phẩm";
+      renderPicker();
+      renderVariant();
+      renderCompare();
+    }
+
+    function renderPicker() {
+      const variants = state.page.variants;
+      $("khPickerCard").hidden = variants.length < 2;
+      $("khPicker").innerHTML = variants.map((v) =>
+        `<button type="button" class="kh-chip ${v.variantId === state.currentId ? "on" : ""}" data-id="${v.variantId}">${esc(v.variantName)}</button>`).join("");
+    }
+    $("khPicker").addEventListener("click", (ev) => {
+      const btn = ev.target.closest(".kh-chip");
+      if (!btn) return;
+      state.currentId = Number(btn.dataset.id);
+      renderPicker();
+      renderVariant();
+      renderCompare();
+      $("khVariantName").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    function renderVariant() {
+      const v = current();
+      $("khVariantName").textContent = v.variantName;
+      $("khVariantMeta").textContent = [v.variantCode, v.harvestSeason ? "Mùa vụ: " + v.harvestSeason : null,
+        v.altitudeM != null ? "Độ cao: " + v.altitudeM + " m" : null].filter(Boolean).join(" · ");
+      renderGallery(v);
+      renderRegion(v);
+      renderVariety(v);
+      renderNamed("khProcess", "Phương pháp sơ chế", v.process);
+      renderNamed("khRoast", "Mức rang", v.roast);
+      renderFlavor(v);
+      renderBrew(v);
+    }
+
+    function renderGallery(v) {
+      const imgs = (v.images || []).filter((u) => /^https:\/\//i.test(u));
+      $("khGallery").innerHTML = imgs.map((u) => `<img src="${esc(u)}" alt="${esc(v.variantName)}" loading="lazy">`).join("");
+    }
+
+    function renderRegion(v) {
+      const r = v.region;
+      $("khRegion").hidden = !r;
+      if (!r) return;
+      const alt = r.altitudeMinM != null || r.altitudeMaxM != null
+        ? [r.altitudeMinM, r.altitudeMaxM].filter((x) => x != null).join(" – ") + " m" : null;
+      $("khRegion").innerHTML = `<h2>Vùng trồng</h2>
+        <dl class="kh-facts">
+          <div><dt>Vùng</dt><dd>${dash(r.regionName)}</dd></div>
+          <div><dt>Tỉnh / thành</dt><dd>${dash(r.provinceName)}</dd></div>
+          <div><dt>Độ cao vùng</dt><dd>${dash(alt)}</dd></div>
+          <div><dt>Thổ nhưỡng</dt><dd>${dash(r.soil)}</dd></div>
+          <div><dt>Khí hậu</dt><dd>${dash(r.climate)}</dd></div>
+        </dl>${r.description ? `<p class="kh-muted">${esc(r.description)}</p>` : ""}`;
+    }
+
+    function renderVariety(v) {
+      const g = v.variety;
+      $("khVariety").hidden = !g;
+      if (!g) return;
+      $("khVariety").innerHTML = `<h2>Giống cà phê</h2>
+        <dl class="kh-facts">
+          <div><dt>Giống</dt><dd>${dash(g.varietyName)}</dd></div>
+          <div><dt>Loài</dt><dd>${dash(g.speciesName)}</dd></div>
+        </dl>${g.description ? `<p class="kh-muted">${esc(g.description)}</p>` : ""}`;
+    }
+
+    function renderNamed(id, title, item) {
+      $(id).hidden = !item;
+      if (!item) return;
+      $(id).innerHTML = `<h2>${esc(title)}</h2><p><b>${esc(item.name)}</b></p>` +
+        (item.description ? `<p class="kh-muted">${esc(item.description)}</p>` : "");
+    }
+
+    function renderFlavor(v) {
+      const hasScore = SCORES.some(([k]) => v.scores[k] != null);
+      const notes = v.flavorNotes || [];
+      $("khFlavor").hidden = !hasScore && !notes.length;
+      if ($("khFlavor").hidden) return;
+      $("khFlavor").innerHTML = `<h2>Hồ sơ hương vị</h2>` +
+        SCORES.filter(([k]) => v.scores[k] != null).map(([k, label]) =>
+          `<div class="kh-score"><span>${label}</span><div class="kh-bar"><i style="width:${v.scores[k] * 10}%"></i></div><b>${v.scores[k]}</b></div>`).join("") +
+        (hasScore ? `<p class="kh-note">Điểm cảm quan trên thang 10.</p>` : "") +
+        (notes.length ? `<div class="kh-notes">${notes.map((n) => `<span>${esc(n.noteName)}</span>`).join("")}</div>` : "");
+    }
+
+    function renderBrew(v) {
+      const list = v.brewMethods || [];
+      $("khBrew").hidden = !list.length;
+      if (!list.length) return;
+      $("khBrew").innerHTML = `<h2>Hướng dẫn pha</h2>` + list.map((b) => `
+        <div class="kh-brewitem"><h3>${esc(b.methodName)}</h3>
+          <dl class="kh-facts">
+            <div><dt>Tỉ lệ cà phê : nước</dt><dd>${dash(b.coffeeWaterRatio)}</dd></div>
+            <div><dt>Nhiệt độ nước</dt><dd>${dash(b.waterTempC)}</dd></div>
+            <div><dt>Thời gian</dt><dd>${dash(b.brewTime)}</dd></div>
+          </dl>
+          ${b.guide ? `<p class="kh-muted">${esc(b.guide)}</p>` : ""}
+          ${b.note ? `<p class="kh-note">Gợi ý cho biến thể này: ${esc(b.note)}</p>` : ""}
+        </div>`).join("");
+    }
+
+    function renderCompare() {
+      const vs = state.page.variants;
+      $("khCompare").hidden = vs.length < 2;
+      if (vs.length < 2) return;
+      const rows = [
+        ["Vùng trồng", (v) => v.region?.regionName],
+        ["Giống", (v) => v.variety?.varietyName],
+        ["Sơ chế", (v) => v.process?.name],
+        ["Mức rang", (v) => v.roast?.name],
+        ["Độ cao (m)", (v) => v.altitudeM],
+        ...SCORES.map(([k, label]) => [label, (v) => v.scores[k]]),
+        ["Nốt hương", (v) => (v.flavorNotes || []).map((n) => n.noteName).join(", ")],
+      ];
+      $("khCompare").innerHTML = `<h2>So sánh các biến thể</h2><div class="kh-tablewrap"><table class="kh-table">
+        <thead><tr><th></th>${vs.map((v) => `<th class="${v.variantId === state.currentId ? "cur" : ""}">${esc(v.variantName)}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map(([label, get]) => `<tr><th>${esc(label)}</th>${vs.map((v) =>
+          `<td class="${v.variantId === state.currentId ? "cur" : ""}">${dash(get(v))}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table></div>`;
+    }
+
+    load();
+  })();
+  </script>
+</body>
+</html>

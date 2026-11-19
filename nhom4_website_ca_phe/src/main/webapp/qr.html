@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR sản phẩm</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#faf7f3;color:#222}
+  header{background:#8b5a2b;color:#fff;padding:18px 40px;font-weight:700;font-size:20px;border-bottom:3px solid #e8871e}
+  header a{color:#fff;text-decoration:none;font-weight:400;font-size:14px;margin-left:20px}
+  main{padding:24px 40px}
+  h2{color:#8b5a2b;margin:0 0 12px}
+  .card{background:#fff;border:1px solid #eadfd3;border-radius:10px;padding:16px;margin-bottom:24px}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px;border-bottom:1px solid #f0e6da;text-align:left;font-size:14px}
+  th{background:#f6ece0;color:#8b5a2b}
+  button,a.btn{background:#8b5a2b;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px;text-decoration:none;display:inline-block;margin:2px}
+  button.alt{background:#e8871e}
+  button.red,a.btn.red{background:#c0392b}
+  code{font-size:12px;color:#555;word-break:break-all}
+  input{padding:6px 8px;border:1px solid #ccc;border-radius:6px;width:60%}
+  #modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center}
+  #modal .box{background:#fff;padding:24px;border-radius:12px;text-align:center;max-width:320px}
+  #qrbox{display:flex;justify-content:center;margin:12px 0}
+</style>
+</head>
+<body>
+
+<header>QR SẢN PHẨM <a href="index.html">← Về trang chủ</a></header>
+
+<main>
+  <div class="card">
+    <h2>Cấu hình</h2>
+    Địa chỉ gốc đưa vào QR (điện thoại quét thì dùng IP máy, ví dụ http://192.168.1.10:8080):<br><br>
+    <input id="base"> <button onclick="saveBase()">Lưu</button>
+  </div>
+
+  <div class="card">
+    <h2>Danh sách sản phẩm</h2>
+    <table>
+      <thead><tr><th>ID</th><th>Tên sản phẩm</th><th>Link khách</th><th>Thao tác</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</main>
+
+<div id="modal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="box">
+    <b id="mname"></b>
+    <div id="qrbox"></div>
+    <button onclick="downloadQR()">Tải PNG</button>
+    <button class="red" onclick="document.getElementById('modal').style.display='none'">Đóng</button>
+  </div>
+</div>
+
+<script>
+const APP = '/nhom4_website_ca_phe';
+
+const PRODUCTS = [
+  {"product_id": 1, "product_name": "Cà phê Arabica Cầu Đất", "qr_token": "1e9901161ec4c4e8a6d6bbe3efbeabbb"},
+  {"product_id": 2, "product_name": "Cà phê Arabica Sơn La", "qr_token": "1bcc6c648d06bf2fe8dee3423f86dfa1"},
+  {"product_id": 3, "product_name": "Cà phê Khe Sanh", "qr_token": "d2898c8edef756b8d1c53bb4cad462f2"},
+  {"product_id": 4, "product_name": "Cà phê Arabica Măng Đen", "qr_token": "0e9e3ca24a68315df6f5817cd73376d2"},
+  {"product_id": 5, "product_name": "Fine Robusta Tây Nguyên", "qr_token": "2b624a471243c796ec98158831e97211"}
+];
+
+const baseInput = document.getElementById('base');
+baseInput.value = localStorage.getItem('qrBase') || location.origin;
+
+function saveBase(){
+  localStorage.setItem('qrBase', baseInput.value.trim());
+  render();
+  alert('Đã lưu');
+}
+
+function link(t){
+  return baseInput.value.trim().replace(/\/$/, '') + APP + '/p/' + t;
+}
+
+function render(){
+  document.getElementById('rows').innerHTML = PRODUCTS.map(function(p){
+    var t = p.qr_token;
+    var bad = t ? t.slice(0, -5) + '46000' : '';
+    var buttons = '';
+    if (t) {
+      buttons =
+        '<a class="btn" target="_blank" href="' + APP + '/p/' + t + '">Trang khách</a>' +
+        '<button class="alt" onclick="showQR(' + p.product_id + ')">Xem QR</button>' +
+        '<a class="btn" target="_blank" href="' + APP + '/api/khach/san-pham?token=' + t + '">API JSON</a>' +
+        '<a class="btn red" target="_blank" href="' + APP + '/p/' + bad + '">Test QR lỗi</a>';
+    }
+    buttons += '<button onclick="genQR(' + p.product_id + ')">' + (t ? 'Tạo lại QR' : 'Tạo QR') + '</button>';
+    return '<tr>' +
+      '<td>' + p.product_id + '</td>' +
+      '<td>' + p.product_name + '</td>' +
+      '<td>' + (t ? '<code>' + link(t) + '</code>' : '<i>Chưa có QR</i>') + '</td>' +
+      '<td>' + buttons + '</td></tr>';
+  }).join('');
+}
+
+function randToken(){
+  var a = new Uint8Array(16);
+  crypto.getRandomValues(a);
+  return Array.from(a).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+function genQR(id){
+  var t = randToken();
+  var sql = "UPDATE products SET qr_token='" + t + "' WHERE product_id=" + id + ";";
+  prompt('Copy câu SQL này (Ctrl+C), chạy trong pgAdmin, rồi sửa lại token của sản phẩm này trong PRODUCTS:', sql);
+}
+
+function showQR(id){
+  var p = PRODUCTS.find(function(x){ return x.product_id == id; });
+  document.getElementById('mname').textContent = p.product_name;
+  var box = document.getElementById('qrbox');
+  box.innerHTML = '';
+  new QRCode(box, { text: link(p.qr_token), width: 220, height: 220 });
+  box.dataset.name = p.product_name;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function downloadQR(){
+  var box = document.getElementById('qrbox');
+  var c = box.querySelector('canvas');
+  var a = document.createElement('a');
+  a.href = c ? c.toDataURL('image/png') : box.querySelector('img').src;
+  a.download = 'QR-' + box.dataset.name + '.png';
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>
