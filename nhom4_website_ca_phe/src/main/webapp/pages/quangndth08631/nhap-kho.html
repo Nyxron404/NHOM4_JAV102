@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Nhập kho & Lô hàng</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        .container { max-width: 1280px; margin: 20px auto; padding: 0 16px; }
+        .tabs { display: flex; gap: 8px; border-bottom: 2px solid #e5e7eb; margin-bottom: 18px; }
+        .tab-btn { padding: 10px 18px; border: none; background: none; cursor: pointer; font-weight: 600; color: #6b7280; }
+        .tab-btn.active { color: #6f4e37; border-bottom: 3px solid #6f4e37; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+        .toolbar input, .toolbar select { padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 14px; }
+        th, td { padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-DRAFT { background: #fef3c7; color: #92400e; }
+        .badge-CONFIRMED { background: #d1fae5; color: #065f46; }
+        .badge-CANCELLED { background: #fee2e2; color: #991b1b; }
+        .btn { padding: 7px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: #6f4e37; color: #fff; }
+        .btn-success { background: #059669; color: #fff; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-warn { background: #d97706; color: #fff; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 920px; max-width: 96%; max-height: 92vh; overflow-y: auto; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .form-grid input, .form-grid select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Phân hệ Nhập kho & Quản lý Lô hàng</h2>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-invoices', this)">1. Phiếu nhập kho</button>
+        <button class="tab-btn" onclick="switchTab('tab-lots', this)">2. Quản lý Lô hàng (Ngày rang / HSD)</button>
+        <button class="tab-btn" onclick="switchTab('tab-mappings', this)">3. Ánh xạ mã hàng NCC</button>
+    </div>
+
+    <!-- TAB 1: PHIẾU NHẬP KHO -->
+    <div id="tab-invoices" class="tab-panel active">
+        <div class="toolbar">
+            <input type="text" id="qSearch" placeholder="Tìm mã HĐ / mã tra cứu...">
+            <select id="filterSupplier"><option value="ALL">Tất cả Nhà cung cấp</option></select>
+            <select id="filterStatus">
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="DRAFT">Nháp (DRAFT)</option>
+                <option value="CONFIRMED">Đã xác nhận</option>
+                <option value="CANCELLED">Đã hủy</option>
+            </select>
+            <input type="date" id="filterFrom" title="Từ ngày">
+            <input type="date" id="filterTo" title="Đến ngày">
+            <button class="btn btn-primary" onclick="loadInvoices()">Lọc</button>
+            <div style="margin-left:auto; display:flex; gap:8px;">
+                <button class="btn btn-warn" onclick="openQrModal()">📷 Quét QR Hóa đơn</button>
+                <button class="btn btn-success" onclick="openCreateModal()">+ Tạo phiếu nhập</button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã HĐ</th>
+                    <th>Mã tra cứu</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Ngày nhập</th>
+                    <th>Phương thức</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="invoiceTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- TAB 2: QUẢN LÝ LÔ HÀNG -->
+    <div id="tab-lots" class="tab-panel">
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã Lô</th>
+                    <th>Sản phẩm (SKU)</th>
+                    <th>Tồn hiện tại</th>
+                    <th>Ngày rang</th>
+                    <th>Hạn sử dụng</th>
+                    <th>Cập nhật nhanh</th>
+                </tr>
+            </thead>
+            <tbody id="lotTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- TAB 3: ÁNH XẠ MÃ HÀNG NCC -->
+    <div id="tab-mappings" class="tab-panel">
+        <div class="toolbar">
+            <input type="hidden" id="editMappingId">
+            <select id="mapSupplierId"></select>
+            <input type="text" id="mapItemCode" placeholder="Mã hàng trên HĐ NCC">
+            <select id="mapPackageId"></select>
+            <button class="btn btn-success" onclick="saveMapping()">Lưu ánh xạ</button>
+            <button class="btn" onclick="resetMappingForm()">Làm mới</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nhà cung cấp</th>
+                    <th>Mã hàng NCC</th>
+                    <th>Gói bán nội bộ (SKU)</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="mappingTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL QUÉT QR -->
+<div class="modal" id="qrModal">
+    <div class="modal-content" style="width:500px;">
+        <h3>Quét mã QR Hóa đơn Nhà cung cấp</h3>
+        <div id="qrReader" style="width:100%;"></div>
+        <p id="qrResultText" style="margin-top:10px; font-weight:600; color:#059669;"></p>
+        <div style="text-align:right; margin-top:12px;">
+            <button class="btn" onclick="closeQrModal()">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TẠO PHIẾU NHẬP & XEM TRƯỚC -->
+<div class="modal" id="createModal">
+    <div class="modal-content">
+        <h3>Tạo Phiếu Nhập & Kiểm tra trùng hóa đơn</h3>
+        <div class="form-grid">
+            <div><label>Nhà cung cấp</label><select id="cSupplierId"></select></div>
+            <div>
+                <label>Số hóa đơn NCC</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="cInvoiceNo" placeholder="VD: HDN-2026-001">
+                    <button class="btn btn-warn" type="button" onclick="checkDuplicate()">Kiểm tra trùng</button>
+                </div>
+            </div>
+            <div><label>Mã tra cứu HĐ điện tử (nếu có)</label><input type="text" id="cLookupCode" placeholder="Nhập mã tra cứu..."></div>
+            <div><label>Ngày hóa đơn</label><input type="date" id="cInvoiceDate"></div>
+            <div>
+                <label>Phương thức nhập</label>
+                <select id="cInputMethod">
+                    <option value="MANUAL">Nhập tay (MANUAL)</option>
+                    <option value="LOOKUP">Mã tra cứu (LOOKUP)</option>
+                    <option value="QR">Quét QR (QR)</option>
+                </select>
+            </div>
+        </div>
+        <div id="previewBox" style="background:#f3f4f6; padding:10px; border-radius:6px; margin-bottom:12px; font-size:13px;">
+            <strong>Xem trước dữ liệu phiếu:</strong> <span id="previewContent">Chưa nhập dữ liệu</span>
+        </div>
+        <div style="text-align:right; gap:8px;">
+            <button class="btn" onclick="previewInvoice()">Xem trước</button>
+            <button class="btn" onclick="closeModal('createModal')">Đóng</button>
+            <button class="btn btn-primary" onclick="submitCreateInvoice()">Tạo phiếu nháp</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CHI TIẾT PHIẾU NHẬP (THÊM / SỬA / XÓA DÒNG, AUTO-MATCH, TẠO BIẾN THỂ NHÁP) -->
+<div class="modal" id="detailModal">
+    <div class="modal-content">
+        <h3>Chi tiết Phiếu Nhập #<span id="detailInvoiceId"></span></h3>
+
+        <div id="draftTools" style="background:#f9fafb; padding:12px; border-radius:6px; margin-bottom:14px;">
+            <div class="form-grid">
+                <div>
+                    <label>Mã hàng NCC (tự động khớp ánh xạ)</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" id="lineSupCode" placeholder="VD: NCC_CF_01">
+                        <button class="btn btn-primary" type="button" onclick="autoMatchLine()">Tự khớp</button>
+                    </div>
+                </div>
+                <div>
+                    <label>Gói bán nội bộ (SKU)</label>
+                    <select id="linePackageId"></select>
+                </div>
+                <div><label>Tên hàng NCC (nếu tạo biến thể nháp)</label><input type="text" id="lineSupName" placeholder="VD: Arabica Cầu Đất 250g"></div>
+                <div>
+                    <label>Chưa có sản phẩm? Tạo biến thể nháp</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="number" id="draftWeightG" value="250" placeholder="Trọng lượng (g)">
+                        <button class="btn btn-warn" type="button" onclick="createDraftVariant()">+ Tạo biến thể nháp</button>
+                    </div>
+                </div>
+                <div><label>Mã lô (tự sinh nếu để trống)</label><input type="text" id="lineLotCode" placeholder="VD: LOT_2026_01"></div>
+                <div><label>Số lượng nhập</label><input type="number" id="lineQty" value="10"></div>
+                <div><label>Đơn giá nhập (VNĐ)</label><input type="number" id="lineUnitCost" value="150000"></div>
+                <div><label>Ngày rang</label><input type="date" id="lineRoastDate"></div>
+                <div><label>Hạn sử dụng (*)</label><input type="date" id="lineExpiryDate"></div>
+            </div>
+            <button class="btn btn-success" onclick="submitAddLine()">+ Thêm dòng vào phiếu</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Biến thể</th>
+                    <th>Mã Lô</th>
+                    <th>Ngày rang</th>
+                    <th>Hạn sử dụng</th>
+                    <th>SL</th>
+                    <th>Đơn giá</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="detailLinesBody"></tbody>
+        </table>
+        <div style="text-align:right; margin-top:14px;">
+            <button class="btn" onclick="closeModal('detailModal')">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../assets/js/shared.js"></script>
+<script src="../../assets/js/quangndth08631-nhap-kho.js"></script>
+</body>
+</html>

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import static dao.hieulnmth08470.InventorySupport.exec;
-import static dao.hieulnmth08470.InventorySupport.list;
+// import static dao.hieulnmth08470.InventorySupport.list;
 import static dao.hieulnmth08470.InventorySupport.one;
 import static dao.hieulnmth08470.InventorySupport.open;
 

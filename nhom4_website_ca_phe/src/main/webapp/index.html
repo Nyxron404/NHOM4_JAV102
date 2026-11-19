@@ -1,93 +1,104 @@
 <!doctype html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="assets/css/index.css?v=20261119e" />
-    <link rel="stylesheet" href="assets/css/shared.css?v=20261119e" />
-    <title>Trang chủ - Quản lý bán hàng</title>
-  </head>
-  <body on>
-    <div id="header"></div>
-    <!-- THANH TIÊU ĐỀ -->
-    <div class="title-bar">
-      <h1>Hệ thống quản lý bán hàng</h1>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/css/index.css?v=20261119e" />
+  <link rel="stylesheet" href="assets/css/shared.css?v=20261119e" />
+  <title>Trang chủ - Quản lý bán hàng</title>
+</head>
+
+<body on>
+  <div id="header"></div>
+  <!-- THANH TIÊU ĐỀ -->
+  <div class="title-bar">
+    <h1>Hệ thống quản lý bán hàng</h1>
+  </div>
+
+  <!-- NỘI DUNG CHÍNH -->
+  <div class="main">
+    <div class="menu-grid">
+      <a href="pages/longdtta00178/longdtta00178.html" class="card">
+        <div class="card-icon">☕</div>
+        <div class="card-body">
+          <div class="card-title">Bán hàng</div>
+          <div class="card-desc">Tạo đơn &amp; tính tiền tại quầy</div>
+        </div>
+      </a>
+
+      <a href="pages/longdtta00178/longdtta001782.html" class="card">
+        <div class="card-icon">🧾</div>
+        <div class="card-body">
+          <div class="card-title">Hóa đơn</div>
+          <div class="card-desc">Lịch sử &amp; in lại hóa đơn</div>
+        </div>
+      </a>
+
+      <a href="pages/hieulnmth08470/kho-hang.html" class="card">
+        <div class="card-icon">📦</div>
+        <div class="card-body">
+          <div class="card-title">Kho hàng</div>
+          <div class="card-desc">Nguyên liệu &amp; nhập/xuất kho</div>
+        </div>
+      </a>
+
+      <a href="pages/minhpvth08530/minhpvth08530.html" class="card">
+        <div class="card-icon">📋</div>
+        <div class="card-body">
+          <div class="card-title">Sản phẩm</div>
+          <div class="card-desc">Biến thể, gói bán &amp; giá bán</div>
+        </div>
+      </a>
+
+      <a href="pages/minhpvth08530/tai-khoan.html" class="card">
+        <div class="card-icon">👥</div>
+        <div class="card-body">
+          <div class="card-title">Nhân viên</div>
+          <div class="card-desc">Phân ca &amp; quyền truy cập</div>
+        </div>
+      </a>
+
+      <a href="pages/hieulnmth08470/hieulnmth08470.html" class="card">
+        <div class="card-icon">🗂️</div>
+        <div class="card-body">
+          <div class="card-title">Danh mục &amp; Nhà cung cấp</div>
+          <div class="card-desc">Vùng trồng, giống, sơ chế, mức rang, độ xay, NCC</div>
+        </div>
+      </a>
+
+      <a href="pages/quangndth08631/bao-cao.html" class="card">
+        <div class="card-icon">📊</div>
+        <div class="card-body">
+          <div class="card-title">Thống kê</div>
+          <div class="card-desc">Doanh thu ngày &amp; món bán chạy</div>
+        </div>
+      </a>
+
+      <a href="pages/quangndth08631/nhap-kho.html" class="card">
+        <div class="card-icon">📦</div>
+        <div class="card-body">
+          <div class="card-title">Nhập kho</div>
+          <div class="card-desc">Hóa đơn nhập &amp; quản lý lô hàng</div>
+        </div>
+      </a>
     </div>
+  </div>
 
-    <!-- NỘI DUNG CHÍNH -->
-    <div class="main">
-      <div class="menu-grid">
-        <a href="pages/longdtta00178/longdtta00178.html" class="card">
-          <div class="card-icon">☕</div>
-          <div class="card-body">
-            <div class="card-title">Bán hàng</div>
-            <div class="card-desc">Tạo đơn &amp; tính tiền tại quầy</div>
-          </div>
-        </a>
+  <script>
+    // Bấm vào "Tài khoản" để mở/đóng menu
+    function toggleMenu() {
+      document.getElementById("accountMenu").classList.toggle("show");
+    }
 
-        <a href="pages/longdtta00178/longdtta001782.html" class="card">
-          <div class="card-icon">🧾</div>
-          <div class="card-body">
-            <div class="card-title">Hóa đơn</div>
-            <div class="card-desc">Lịch sử &amp; in lại hóa đơn</div>
-          </div>
-        </a>
-
-        <a href="pages/hieulnmth08470/kho-hang.html" class="card">
-          <div class="card-icon">📦</div>
-          <div class="card-body">
-            <div class="card-title">Kho hàng</div>
-            <div class="card-desc">Nguyên liệu &amp; nhập/xuất kho</div>
-          </div>
-        </a>
-
-        <a href="pages/minhpvth08530/minhpvth08530.html" class="card">
-          <div class="card-icon">📋</div>
-          <div class="card-body">
-            <div class="card-title">Sản phẩm</div>
-            <div class="card-desc">Biến thể, gói bán &amp; giá bán</div>
-          </div>
-        </a>
-
-        <a href="pages/minhpvth08530/tai-khoan.html" class="card">
-          <div class="card-icon">👥</div>
-          <div class="card-body">
-            <div class="card-title">Nhân viên</div>
-            <div class="card-desc">Phân ca &amp; quyền truy cập</div>
-          </div>
-        </a>
-
-        <a href="pages/hieulnmth08470/hieulnmth08470.html" class="card">
-          <div class="card-icon">🗂️</div>
-          <div class="card-body">
-            <div class="card-title">Danh mục &amp; Nhà cung cấp</div>
-            <div class="card-desc">Vùng trồng, giống, sơ chế, mức rang, độ xay, NCC</div>
-          </div>
-        </a>
-
-        <a href="thong-ke.html" class="card">
-          <div class="card-icon">📊</div>
-          <div class="card-body">
-            <div class="card-title">Thống kê</div>
-            <div class="card-desc">Doanh thu ngày &amp; món bán chạy</div>
-          </div>
-        </a>
-      </div>
-    </div>
-
-    <script>
-      // Bấm vào "Tài khoản" để mở/đóng menu
-      function toggleMenu() {
-        document.getElementById("accountMenu").classList.toggle("show");
+    // Bấm ra ngoài thì đóng menu
+    window.onclick = function (e) {
+      if (!e.target.closest(".account")) {
+        document.getElementById("accountMenu").classList.remove("show");
       }
+    };
+  </script>
+  <script src="./assets/js/shared.js?v=20261119e"></script>
+</body>
 
-      // Bấm ra ngoài thì đóng menu
-      window.onclick = function (e) {
-        if (!e.target.closest(".account")) {
-          document.getElementById("accountMenu").classList.remove("show");
-        }
-      };
-    </script>
-    <script src="./assets/js/shared.js?v=20261119e"></script>
-  </body>
 </html>
