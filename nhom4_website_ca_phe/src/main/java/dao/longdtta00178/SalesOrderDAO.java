@@ -439,7 +439,7 @@ public class SalesOrderDAO {
 
         // 5. Chuyển đơn sang đã xác nhận (140.1)
         try (PreparedStatement ps = con.prepareStatement(
-                "UPDATE sales_invoices SET status = 'PAID' WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
+                                "UPDATE sales_invoices SET status = 'PAID', confirmed_at = now() WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
             ps.setLong(1, invoiceId);
             ps.executeUpdate();
         }
