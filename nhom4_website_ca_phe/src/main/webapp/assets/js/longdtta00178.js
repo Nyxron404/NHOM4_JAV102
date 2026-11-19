@@ -258,7 +258,21 @@ async function loadCurrentOrder() {
 }
 
 // Bấm + ở gói: chưa có đơn thì tạo đơn trước (130), rồi thêm gói (132)
-async function addToOrder(packageId) {
+/* Các thao tác sửa đơn chạy lần lượt (xếp hàng).
+   Bấm + nhanh nhiều lần: lần sau đợi lần trước xong -> chỉ tạo 1 đơn, số lượng cộng dồn đúng. */
+let orderQueue = Promise.resolve();
+
+function runInOrder(task) {
+    const run = orderQueue.then(task, task);
+    orderQueue = run.catch(() => {});
+    return run;
+}
+
+function addToOrder(packageId) {
+    return runInOrder(() => addToOrderNow(packageId));
+}
+
+async function addToOrderNow(packageId) {
     try {
         if (!currentOrder) {
             saveOrder(await postOrder({ action: "create" }));
@@ -275,7 +289,11 @@ async function addToOrder(packageId) {
     }
 }
 
-async function changeQuantity(lineId, quantity) {
+function changeQuantity(lineId, quantity) {
+    return runInOrder(() => changeQuantityNow(lineId, quantity));
+}
+
+async function changeQuantityNow(lineId, quantity) {
     try {
         saveOrder(await postOrder({
             action: "updateQty",
@@ -290,7 +308,11 @@ async function changeQuantity(lineId, quantity) {
     }
 }
 
-async function removeLine(lineId) {
+function removeLine(lineId) {
+    return runInOrder(() => removeLineNow(lineId));
+}
+
+async function removeLineNow(lineId) {
     try {
         saveOrder(await postOrder({
             action: "removeLine",
