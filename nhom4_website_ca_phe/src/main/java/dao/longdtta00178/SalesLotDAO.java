@@ -372,7 +372,7 @@ public class SalesLotDAO {
      * Mỗi lô âm có tối đa 1 phiếu [BAN_AM] đang chờ duyệt. Đã có thì cập nhật "tồn hệ thống" = tồn hiện tại,
      * để chủ duyệt xong (approve ghi counted - system) tồn về đúng 0.
      */
-    private void requestNegativeAdjustment(Connection con, long invoiceId, long lotId, Integer userId)
+    public  void requestNegativeAdjustment(Connection con, long invoiceId, long lotId, Integer userId)
             throws SQLException {
         int stock = lotStock(con, lotId);
         int updated;

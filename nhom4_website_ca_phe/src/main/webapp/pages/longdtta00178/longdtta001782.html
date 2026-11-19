@@ -144,6 +144,13 @@
               <span class="muted" id="dReprintCount"></span>
             </div>
 
+            
+            <!-- [155] Sửa đơn đã xác nhận -->
+            <div class="detail-actions" id="dEditBox" style="display: none">
+              <button class="btn" id="btnEdit">✏️ Sửa đơn</button>
+              <span class="muted" id="dEditHint"></span>
+            </div>
+
             <!-- Hủy đơn đã xác nhận (154): chỉ chủ cửa hàng; hoàn kho (156/158), trừ tiền (157) -->
             <div class="owner-box" id="ownerBox" style="display: none">
               <div class="owner-title">🔒 Hủy đơn đã xác nhận <span class="sub">Chỉ tài khoản chủ cửa hàng</span></div>
@@ -155,6 +162,56 @@
               <label class="check"><input type="checkbox" id="cRefund" /> <span id="cRefundText">Trừ tiền</span></label>
               <button class="btn btn-danger" id="btnCancelPaid">Hủy đơn</button>
             </div>
+          </div>
+        </div>
+      </div>
+
+            <!-- [155] Sửa đơn đã xác nhận: JS longdtta001782.js điền -->
+      <div id="modal-sua" class="modal">
+        <div class="modal-box">
+          <div class="modal-head">
+            <span>Sửa đơn <span id="eTitle"></span></span>
+            <a href="#hoa-don" class="icon-btn">✕</a>
+          </div>
+          <div class="muted" id="eTimer"></div>
+
+          <!-- Quét / gõ mã lô: Thêm túi hoặc Trả túi -->
+          <div class="scan-bar">
+            <select id="eMode">
+              <option value="add">➕ Thêm túi</option>
+              <option value="return">↩ Trả túi</option>
+            </select>
+                        <input type="text" id="eScan" placeholder="Quét hoặc nhập mã lô rồi Enter" autocomplete="off" />
+            <button class="btn btn-sm" id="eCamBtn" title="Quét QR bằng camera">📷 Camera</button>
+          </div>
+          <!-- Camera: mở / tắt bằng nút 📷, quét liên tục nhiều túi -->
+          <div id="eCamBox" style="display: none">
+            <video id="eCamVideo" class="cam-video" playsinline muted></video>
+            <canvas id="eCamCanvas" style="display: none"></canvas>
+            <div class="wait" id="eCamStatus"></div>
+          </div>
+
+          <div id="eLines"></div>
+
+          <div class="summary">
+            <div class="kv"><span>Tổng trước khi sửa</span><span id="eBefore">0đ</span></div>
+            <div class="kv kv-total"><span>Tổng sau khi sửa</span><span id="eAfter">0đ</span></div>
+            <div class="kv"><span>Đã thu</span><span id="ePaid">0đ</span></div>
+            <div class="kv kv-due"><span id="eDiffLabel">Chênh lệch</span><span id="eDiff">0đ</span></div>
+          </div>
+          <div class="field" id="eCashBox" style="display: none">
+            <label>Khách đưa (tiền mặt)</label>
+            <input type="text" id="eCash" inputmode="numeric" placeholder="Số tiền khách đưa" />
+          </div>
+          <div class="field">
+            <label>Lý do sửa</label>
+            <input type="text" id="eReason" maxlength="200" placeholder="VD: Nhân viên chọn nhầm gói 500g" />
+          </div>
+          <div class="order-msg" id="eMsg"></div>
+          <div class="hint">Giảm túi: trả về đúng lô đó. Thêm túi: trừ đúng lô. Tổng giảm thì hoàn tiền mặt cho khách.</div>
+          <div class="modal-actions">
+            <a href="#hoa-don" class="btn">Hủy</a>
+            <button class="btn btn-primary" id="btnSaveEdit">Lưu sửa đơn</button>
           </div>
         </div>
       </div>

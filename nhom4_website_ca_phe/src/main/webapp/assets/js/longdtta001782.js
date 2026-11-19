@@ -231,6 +231,14 @@ function renderDetail() {
     document.getElementById("dPrintBox").style.display = printable ? "flex" : "none";
     document.getElementById("dReprintCount").textContent = "Đã in lại " + extra.reprintCount + " lần";
 
+            // [155] Sửa đơn: chỉ đơn PAID; nhân viên chỉ đơn mình lập trong 10 phút
+    const edit = detail.edit || {};
+    document.getElementById("dEditBox").style.display = inv.status === "PAID" ? "flex" : "none";
+    document.getElementById("btnEdit").disabled = !edit.canEdit;
+    document.getElementById("dEditHint").textContent = edit.canEdit
+        ? (edit.editSecondsLeft != null ? "Còn " + Math.ceil(edit.editSecondsLeft / 60) + " phút để sửa" : "")
+        : (edit.editReason || "");
+
     // Hủy đơn đã xác nhận: chỉ chủ cửa hàng, chỉ đơn PAID
     const owner = document.getElementById("ownerBox");
     owner.style.display = canCancel && inv.status === "PAID" ? "block" : "none";
@@ -381,11 +389,357 @@ function bindEvents() {
     document.getElementById("btnCancelPaid").addEventListener("click", cancelPaidOrder);
 }
 
+/* =====================================================================
+   [155] SỬA ĐƠN ĐÃ XÁC NHẬN (bán theo mã lô)
+   Chủ (SALES_INVOICE_EDIT): mọi đơn. Nhân viên: đơn mình lập, trong 10 phút sau khi xác nhận.
+   Giảm túi ở lô nào -> trả về đúng lô đó; tăng / thêm lô -> trừ đúng lô đó.
+   Quét QR được bán vượt tồn (chủ duyệt sau); gõ tay / bấm + thì không.
+   Tổng tăng -> thu tiền mặt ngay; tổng giảm -> hoàn tiền mặt.
+   ===================================================================== */
+
+let draft = [];            // [{lotId, lotCode, expiryDate, variantName, weightG, wholeBean, unitPrice, oldQty, qty, scannedAdded, stock}]
+let editTimer = null;
+let editScanTimes = [];
+
+function openEdit() {
+    const { order, edit } = detail;
+    if (!edit || !edit.canEdit) return;
+    const priceByLine = {};
+    order.lines.forEach(l => { priceByLine[l.salesLineId] = l; });
+
+    draft = order.allocations.map(a => {
+        const line = priceByLine[a.salesLineId] || {};
+        return {
+            lotId: a.lotId, lotCode: a.lotCode, expiryDate: a.expiryDate,
+            packageId: line.packageId, variantName: a.variantName, weightG: a.weightG, wholeBean: a.wholeBean,
+            unitPrice: Number(line.unitPrice), oldQty: a.quantity, qty: a.quantity, scannedAdded: 0,
+            stock: a.lotStock
+        };
+    });
+
+    document.getElementById("eTitle").textContent = order.invoice.invoiceNo;
+    document.getElementById("eReason").value = "";
+    document.getElementById("eCash").value = "";
+    document.getElementById("eScan").value = "";
+    showEditMessage("");
+    renderDraft();
+    startEditTimer(edit.editSecondsLeft);
+    location.hash = "#modal-sua";
+    document.getElementById("eScan").focus();
+}
+
+function startEditTimer(seconds) {
+    clearInterval(editTimer);
+    const box = document.getElementById("eTimer");
+    if (seconds === null || seconds === undefined) {
+        box.textContent = "";
+        return;
+    }
+    let left = seconds;
+    const tick = () => {
+        if (left <= 0) {
+            clearInterval(editTimer);
+            box.textContent = "Đã hết thời gian sửa đơn";
+            document.getElementById("btnSaveEdit").disabled = true;
+            return;
+        }
+        box.textContent = "Còn " + Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0") + " để sửa đơn";
+        left--;
+    };
+    document.getElementById("btnSaveEdit").disabled = false;
+    tick();
+    editTimer = setInterval(tick, 1000);
+}
+
+function showEditMessage(text, ok) {
+    const box = document.getElementById("eMsg");
+    box.textContent = text || "";
+    box.style.display = text ? "block" : "none";
+    box.classList.toggle("msg-warn", !!ok);
+}
+
+/* ---------- Vẽ bản nháp ---------- */
+function renderDraft() {
+    document.getElementById("eLines").innerHTML = draft.length === 0
+        ? '<div class="order-empty">Đơn chưa có gói nào</div>'
+        : draft.map((d, i) => {
+            const diff = d.qty - d.oldQty;
+            const over = diff > 0 ? diff - Math.max(d.stock, 0) : 0;
+            return `
+            <div class="lot-row ${d.qty === 0 ? "lot-removed" : ""}">
+              <div class="lot-info">
+                <span class="line-name">${esc(d.variantName)} · ${weightText(d.weightG)} ${d.wholeBean ? "nguyên hạt" : "xay sẵn"}</span>
+                <span class="lot-code">${esc(d.lotCode)} · HSD ${dateText(d.expiryDate)}</span>
+                <span class="sub">
+                  ${d.oldQty ? "Trước: " + d.oldQty : "Lô mới"} · ${money(d.unitPrice)}/túi
+                  ${diff < 0 ? ` · <b>trả ${-diff} túi về lô</b>` : ""}
+                  ${diff > 0 ? ` · <b>trừ thêm ${diff} túi</b>` : ""}
+                  ${d.scannedAdded ? " · 📷 quét " + d.scannedAdded : ""}
+                </span>
+                ${over > 0 ? `<span class="sub text-warn">Vượt tồn ${over} túi${over > d.scannedAdded ? " → phải quét QR mới được bán" : " → bán âm, chủ duyệt sau"}</span>` : ""}
+              </div>
+              <div class="qty">
+                <button data-edit="minus" data-i="${i}" ${d.qty <= 0 ? "disabled" : ""}>−</button>
+                <input class="qty-input edit-qty" type="number" min="0" value="${d.qty}" data-i="${i}" />
+                <button data-edit="plus" data-i="${i}">+</button>
+              </div>
+            </div>`;
+        }).join("");
+
+    const before = Number(detail.order.invoice.totalAmount);
+    const after = draft.reduce((sum, d) => sum + d.qty * d.unitPrice, 0);
+    const paid = Number(detail.order.invoice.paidAmount);
+    const diff = after - paid;
+    document.getElementById("eBefore").textContent = money(before);
+    document.getElementById("eAfter").textContent = money(after);
+    document.getElementById("ePaid").textContent = money(paid);
+    document.getElementById("eDiffLabel").textContent = diff > 0 ? "Thu thêm (tiền mặt)" : diff < 0 ? "Hoàn lại khách (tiền mặt)" : "Chênh lệch";
+    document.getElementById("eDiff").textContent = money(Math.abs(diff));
+    document.getElementById("eCashBox").style.display = diff > 0 ? "" : "none";
+}
+
+/* ---------- Đổi số túi ---------- */
+function setDraftQty(i, qty) {
+    const d = draft[i];
+    d.qty = Math.max(0, qty);
+    d.scannedAdded = Math.min(d.scannedAdded, Math.max(0, d.qty - d.oldQty));
+    renderDraft();
+}
+
+// Quét / gõ mã lô: mode "add" thêm 1 túi, "return" trả 1 túi
+async function handleEditCode(code, scanned) {
+    code = (code || "").trim();
+    if (!code) return;
+    const mode = document.getElementById("eMode").value;
+    let i = draft.findIndex(d => d.lotCode.toUpperCase() === code.toUpperCase());
+
+    if (mode === "return") {
+        if (i < 0 || draft[i].qty === 0) {
+            showEditMessage("Lô " + code + " không có trong đơn");
+            return;
+        }
+        setDraftQty(i, draft[i].qty - 1);
+        showEditMessage("");
+        return;
+    }
+
+    if (i < 0) {
+        let lot;
+        try {
+            lot = await getJson(API_INVOICE + "?action=lot&code=" + encodeURIComponent(code));
+        } catch (error) {
+            showEditMessage(error.message);
+            return;
+        }
+        if (lot.expired) { showEditMessage("Lô " + lot.lotCode + " đã hết hạn, không bán"); return; }
+        if (!lot.active) { showEditMessage("Gói " + lot.sku + " đã ngừng bán"); return; }
+        // Gói đã có trong đơn (lô khác) thì giữ giá cũ của dòng, gói mới lấy giá hiện hành
+        const same = draft.find(d => d.packageId === lot.packageId);
+        const price = same ? same.unitPrice : Number(lot.salePrice);
+        if (!same && lot.salePrice === null) { showEditMessage("Gói " + lot.sku + " chưa có giá bán"); return; }
+        draft.push({
+            lotId: lot.lotId, lotCode: lot.lotCode, expiryDate: lot.expiryDate, packageId: lot.packageId,
+            variantName: lot.variantName, weightG: lot.weightG, wholeBean: lot.wholeBean,
+            unitPrice: price, oldQty: 0, qty: 0, scannedAdded: 0, stock: lot.stock
+        });
+        i = draft.length - 1;
+    }
+    const d = draft[i];
+    d.qty += 1;
+    if (scanned && d.qty > d.oldQty) d.scannedAdded += 1;
+    showEditMessage("");
+    renderDraft();
+}
+
+/* ---------- Lưu ---------- */
+async function saveEdit() {
+    const reason = document.getElementById("eReason").value.trim();
+    if (!reason) { showEditMessage("Nhập lý do sửa đơn"); return; }
+    if (!draft.some(d => d.qty > 0)) { showEditMessage("Đơn không còn gói nào. Muốn bỏ hết thì dùng Hủy đơn."); return; }
+    if (!draft.some(d => d.qty !== d.oldQty)) { showEditMessage("Chưa có thay đổi nào"); return; }
+    const due = draft.reduce((sum, d) => sum + d.qty * d.unitPrice, 0) - Number(detail.order.invoice.paidAmount);
+    const cash = Number(document.getElementById("eCash").value.replace(/\D/g, "") || 0);
+    if (due > 0 && cash < due) { showEditMessage("Phải thu thêm " + money(due) + ", khách đưa chưa đủ"); return; }
+
+    const button = document.getElementById("btnSaveEdit");
+    button.disabled = true;
+    const totalBefore = Number(detail.order.invoice.totalAmount);
+    const paidBefore = Number(detail.order.invoice.paidAmount);
+    try {
+        detail = await postInvoice({
+            action: "edit",
+            id: detail.order.invoice.salesInvoiceId,
+            lots: draft.map(d => d.lotId + ":" + d.qty + ":" + d.scannedAdded).join(";"),
+            cashGiven: document.getElementById("eCash").value,
+            reason: reason
+        });
+                clearInterval(editTimer);
+        stopEditCamera();
+        location.hash = "#hoa-don";
+        renderDetail();
+        loadList();
+        const after = Number(detail.order.invoice.totalAmount);
+        const diff = after - paidBefore;
+        showDetailMessage("Đã sửa đơn: " + money(totalBefore) + " → " + money(after)
+            + (diff > 0 ? " · đã thu thêm " + money(diff) : diff < 0 ? " · đã hoàn khách " + money(-diff) + " tiền mặt" : ""));
+    } catch (error) {
+        showEditMessage(error.message);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+/* ---------- Camera trong hộp thoại sửa đơn (giống máy quét, quét liên tục) ---------- */
+let eCamStream = null;
+let eCamTimer = null;
+let eCamDetector = null;
+// Chống đọc trùng: cùng 1 mã chỉ tính lại khi mã đã rời khung hình (có khung không thấy mã) và sau 1 giây
+let eCamLast = { code: "", at: 0, gone: true };
+
+const JSQR_URL = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+
+function setECamStatus(text, error) {
+    const box = document.getElementById("eCamStatus");
+    box.textContent = text;
+    box.classList.toggle("wait-fail", !!error);
+}
+
+async function toggleEditCamera() {
+    if (eCamStream) { stopEditCamera(); return; }
+    document.getElementById("eCamBox").style.display = "block";
+    document.getElementById("eCamBtn").textContent = "✕ Tắt camera";
+    if (!window.isSecureContext || !navigator.mediaDevices) {
+        setECamStatus("Trình duyệt chỉ cho mở camera trên localhost hoặc https.", true);
+        return;
+    }
+    setECamStatus("Đang mở camera…");
+    try {
+        if ("BarcodeDetector" in window && !eCamDetector) {
+            const formats = await BarcodeDetector.getSupportedFormats();
+            if (formats.includes("qr_code")) {
+                eCamDetector = new BarcodeDetector({ formats: formats.filter(f => ["qr_code", "code_128"].includes(f)) });
+            }
+        }
+        if (!eCamDetector && !window.jsQR) await loadScriptOnce(JSQR_URL);
+
+        eCamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        const video = document.getElementById("eCamVideo");
+        video.srcObject = eCamStream;
+        await video.play();
+        setECamStatus("Đưa mã QR trên nhãn lô vào khung hình (" +
+            (document.getElementById("eMode").value === "return" ? "Trả túi" : "Thêm túi") + ")");
+        eCamTimer = setInterval(scanEditFrame, 250);
+    } catch (error) {
+        setECamStatus("Không mở được camera: " + error.message, true);
+        stopEditCamera(true);
+    }
+}
+
+async function scanEditFrame() {
+    const video = document.getElementById("eCamVideo");
+    if (!eCamStream || video.readyState < 2) return;
+    let code = null;
+    try {
+        if (eCamDetector) {
+            const found = await eCamDetector.detect(video);
+            if (found.length) code = found[0].rawValue;
+        } else if (window.jsQR) {
+            const canvas = document.getElementById("eCamCanvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const found = window.jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data,
+                canvas.width, canvas.height);
+            if (found) code = found.data;
+        }
+    } catch (error) {
+        return;
+    }
+    if (!code) {
+        eCamLast.gone = true;                   // mã đã rời khung hình
+        return;
+    }
+    const now = Date.now();
+    if (code === eCamLast.code && (!eCamLast.gone || now - eCamLast.at < 1000)) return;
+    eCamLast = { code: code, at: now, gone: false };
+    setECamStatus("Đã đọc " + code);
+    handleEditCode(code, true);                 // giống máy quét
+}
+
+// keepBox = true: giữ khung để hiện lỗi
+function stopEditCamera(keepBox) {
+    clearInterval(eCamTimer);
+    eCamTimer = null;
+    if (eCamStream) eCamStream.getTracks().forEach(t => t.stop());
+    eCamStream = null;
+    document.getElementById("eCamBtn").textContent = "📷 Camera";
+    if (!keepBox) document.getElementById("eCamBox").style.display = "none";
+}
+
+function loadScriptOnce(url) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = url;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("không tải được thư viện đọc QR (cần mạng)"));
+        document.head.appendChild(s);
+    });
+}
+
+function bindEditEvents() {
+    document.getElementById("btnEdit").addEventListener("click", openEdit);
+    document.getElementById("btnSaveEdit").addEventListener("click", saveEdit);
+
+    const lines = document.getElementById("eLines");
+    lines.addEventListener("click", e => {
+        const b = e.target.closest("button[data-edit]");
+        if (!b || b.disabled) return;
+        const i = Number(b.dataset.i);
+        setDraftQty(i, draft[i].qty + (b.dataset.edit === "plus" ? 1 : -1));
+    });
+    lines.addEventListener("change", e => {
+        if (!e.target.classList.contains("edit-qty")) return;
+        const q = parseInt(e.target.value, 10);
+        setDraftQty(Number(e.target.dataset.i), isNaN(q) ? draft[Number(e.target.dataset.i)].qty : q);
+    });
+
+    // Ô quét: máy quét gõ rất nhanh (< 35ms/ký tự) -> coi là quét
+    const scan = document.getElementById("eScan");
+    scan.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const t = editScanTimes;
+            const avg = t.length > 1 ? (t[t.length - 1] - t[0]) / (t.length - 1) : 999;
+            handleEditCode(scan.value, scan.value.trim().length >= 4 && avg < 35);
+            scan.value = "";
+            editScanTimes = [];
+            return;
+        }
+        if (e.key.length === 1) editScanTimes.push(performance.now());
+    });
+
+        document.getElementById("eCamBtn").addEventListener("click", toggleEditCamera);
+    // Đổi chế độ Thêm / Trả khi camera đang mở -> cập nhật dòng hướng dẫn
+    document.getElementById("eMode").addEventListener("change", () => {
+        if (eCamStream) setECamStatus("Đưa mã QR trên nhãn lô vào khung hình ("
+            + (document.getElementById("eMode").value === "return" ? "Trả túi" : "Thêm túi") + ")");
+    });
+
+    window.addEventListener("hashchange", () => {
+        if (location.hash !== "#modal-sua") {
+            clearInterval(editTimer);
+            stopEditCamera();                      // đóng hộp thoại -> tắt camera
+        }
+    });
+}
+
 /* ---------- Khởi động: mặc định xem hóa đơn hôm nay ---------- */
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("fFrom").value = todayIso();
     document.getElementById("fTo").value = todayIso();
     bindEvents();
+        bindEditEvents();
     loadMethods();
     loadStoreInfo();
     loadList();

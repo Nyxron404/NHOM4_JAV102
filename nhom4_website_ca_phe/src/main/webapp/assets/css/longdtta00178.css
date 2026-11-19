@@ -1390,3 +1390,19 @@ img.qr {
     color: #B45F04;
     font-size: 13px;
 }
+/* ===== SỬA ĐƠN ===== */
+#eLines {
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.lot-removed {
+    opacity: 0.5;
+}
+
+#eMode {
+    border: none;
+    background: transparent;
+    font-weight: bold;
+    color: #8B5A2B;
+}
