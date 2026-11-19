@@ -216,6 +216,8 @@ function renderDetail() {
 
     // Lô đã trừ (đơn chờ thanh toán chưa trừ kho)
     document.getElementById("dLotsBox").style.display = order.allocations.length ? "block" : "none";
+        document.getElementById("dLotsTitle").textContent =
+        inv.status === "PENDING" ? "Lô đã chọn (chưa trừ kho)" : "Lô đã trừ";
     document.getElementById("dLots").innerHTML = order.allocations.map(a => `
         <tr>
           <td>${esc(a.lotCode)} ${a.nearExpiry && inv.status === "PAID" ? '<span class="tag-near">Cận hạn</span>' : ""}

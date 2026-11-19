@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import models.longdtta00178.SalesInvoice;
+import dao.longdtta00178.SalesLotDAO;
 
 /**
  * API đơn đang lập ở màn bán hàng.
@@ -35,6 +36,7 @@ public class SalesOrderController extends HttpServlet {
 
     private final SalesOrderDAO dao = new SalesOrderDAO();
     private final VnpayDAO vnpayDao = new VnpayDAO();
+        private final SalesLotDAO lotDao = new SalesLotDAO();
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("application/json;charset=UTF-8");
@@ -65,6 +67,7 @@ public class SalesOrderController extends HttpServlet {
         try {
             String action = req.getParameter("action");
             long invoiceId;
+            String warning = null;
 
                         if ("create".equals(action)) {
                 invoiceId = dao.createInvoice(currentUserId(req));
@@ -73,17 +76,21 @@ public class SalesOrderController extends HttpServlet {
                 return;                                      // trả thông tin QR, không trả đơn
             } else {
                 invoiceId = Long.parseLong(req.getParameter("invoiceId"));
-                if ("addPackage".equals(action)) {
-                    String qty = req.getParameter("quantity");
-                    dao.addPackage(invoiceId,
-                            Integer.parseInt(req.getParameter("packageId")),
-                            qty == null || qty.isBlank() ? 1 : Integer.parseInt(qty));
-                } else if ("updateQty".equals(action)) {
-                    dao.updateQuantity(invoiceId,
+                                if ("addLot".equals(action)) {
+                    // Thêm 1 túi theo lô: lotId (chọn ở ô thả xuống) hoặc lotCode (quét / gõ mã lô)
+                    String lotId = req.getParameter("lotId");
+                    SalesLotDAO.AddResult r = lotDao.addLot(invoiceId,
+                            lotId == null || lotId.isBlank() ? null : Long.valueOf(lotId),
+                            req.getParameter("lotCode"),
+                            "true".equals(req.getParameter("scanned")));
+                    warning = r.warning();
+                } else if ("updateLotQty".equals(action)) {
+                    lotDao.updateLotQty(invoiceId,
                             Long.parseLong(req.getParameter("lineId")),
+                            Long.parseLong(req.getParameter("lotId")),
                             Integer.parseInt(req.getParameter("quantity")));
                 } else if ("removeLine".equals(action)) {
-                    dao.removeLine(invoiceId, Long.parseLong(req.getParameter("lineId")));
+                    lotDao.removeLine(invoiceId, Long.parseLong(req.getParameter("lineId")));
                 } else if ("confirm".equals(action)) {
                     dao.confirmOrder(invoiceId, currentUserId(req), toMoney(req.getParameter("cashGiven")));
                 } else if ("cancel".equals(action)) {
@@ -95,7 +102,7 @@ public class SalesOrderController extends HttpServlet {
                     return;
                 }
             }
-            writeOrder(resp, invoiceId);
+                        writeOrder(resp, invoiceId, warning);
 
         } catch (NumberFormatException e) {
             fail(resp, 400, "Tham số không hợp lệ");
@@ -139,14 +146,26 @@ public class SalesOrderController extends HttpServlet {
     }
 
     /** Đọc lại đơn + dòng hàng + thanh toán + lô đã trừ rồi trả JSON */
-    private void writeOrder(HttpServletResponse resp, long invoiceId) throws IOException, SQLException {
+        private void writeOrder(HttpServletResponse resp, long invoiceId) throws IOException, SQLException {
+        writeOrder(resp, invoiceId, null);
+    }
+
+    /** warning: cảnh báo kèm theo (VD quét lô vượt tồn) -> {"warning":"...","invoice":...} */
+    private void writeOrder(HttpServletResponse resp, long invoiceId, String warning) throws IOException, SQLException {
         SalesInvoice invoice = dao.findInvoice(invoiceId);
         if (invoice == null) {
             fail(resp, 404, "Không tìm thấy đơn");
             return;
         }
-        resp.getWriter().write(SalesJson.order(invoice, dao.findLines(invoiceId),
-                dao.findPayments(invoiceId), dao.findAllocations(invoiceId)));
+        String json = SalesJson.order(invoice, dao.findLines(invoiceId),
+                dao.findPayments(invoiceId), dao.findAllocations(invoiceId));
+        if (warning != null) {
+            Map<String, Object> w = new LinkedHashMap<>();
+            w.put("warning", warning);
+            String head = SalesJson.object(w);                       // {"warning":"..."}
+            json = head.substring(0, head.length() - 1) + "," + json.substring(1);
+        }
+        resp.getWriter().write(json);
     }
 
     /**

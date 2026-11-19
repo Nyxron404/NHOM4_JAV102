@@ -72,7 +72,11 @@ public class SalesProductDAO {
               AND (params.keyword IS NULL
                    OR pk.sku ILIKE '%' || params.keyword || '%'
                    OR f_search_key(pr.product_name) LIKE '%' || f_search_key(params.keyword) || '%'
-                   OR f_search_key(v.variant_name)  LIKE '%' || f_search_key(params.keyword) || '%')
+                                      OR f_search_key(v.variant_name)  LIKE '%' || f_search_key(params.keyword) || '%'
+                   OR EXISTS (SELECT 1 FROM lots lo2                                   -- tìm theo mã lô
+                              JOIN purchase_invoice_lines pil2 ON pil2.purchase_line_id = lo2.purchase_line_id
+                              WHERE pil2.package_id = pk.package_id
+                                AND lo2.lot_code ILIKE '%' || params.keyword || '%'))
               AND (params.species_name   IS NULL OR sp.species_name    = params.species_name)
               AND (params.whole_bean     IS NULL OR g.is_whole_bean     = params.whole_bean)
               AND (params.region_id      IS NULL OR v.region_id         = params.region_id)
@@ -138,7 +142,50 @@ public class SalesProductDAO {
                 }
             }
         }
+                attachLots(new ArrayList<>(cards.values()), keyword);
         return new ArrayList<>(cards.values());
+    }
+
+    /** Gắn danh sách lô bán được vào từng gói (ô chọn lô) + đánh dấu lô khớp mã lô đang tìm */
+    private void attachLots(List<SalesProductCard> cards, String keyword) throws SQLException {
+        Map<Integer, SellablePackage> byId = new LinkedHashMap<>();
+        for (SalesProductCard c : cards) for (SellablePackage p : c.getPackages()) byId.put(p.getPackageId(), p);
+        if (byId.isEmpty()) return;
+        String sql = """
+                SELECT pil.package_id, lo.lot_id, lo.lot_code, lo.expiry_date, SUM(m.quantity_change) AS qty,
+                       lo.expiry_date <= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+                           + COALESCE((SELECT setting_value::int FROM system_settings
+                                       WHERE setting_key = 'inventory.near_expiry_days'), 30) AS near_expiry
+                FROM lots lo
+                JOIN purchase_invoice_lines pil ON pil.purchase_line_id = lo.purchase_line_id
+                JOIN stock_movements m          ON m.lot_id = lo.lot_id
+                WHERE pil.package_id = ANY (?)
+                  AND lo.expiry_date >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+                GROUP BY pil.package_id, lo.lot_id, lo.lot_code, lo.expiry_date
+                HAVING SUM(m.quantity_change) > 0
+                ORDER BY lo.expiry_date, lo.lot_id
+                """;
+        String kw = keyword == null ? null : keyword.trim().toUpperCase();
+        try (Connection con = connect();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setArray(1, con.createArrayOf("integer", byId.keySet().toArray()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    SellablePackage p = byId.get(rs.getInt("package_id"));
+                    Map<String, Object> lot = new LinkedHashMap<>();
+                    lot.put("lotId", rs.getLong("lot_id"));
+                    lot.put("lotCode", rs.getString("lot_code"));
+                    lot.put("expiryDate", rs.getObject("expiry_date", java.time.LocalDate.class));
+                    lot.put("qty", rs.getInt("qty"));
+                    lot.put("nearExpiry", rs.getBoolean("near_expiry"));
+                    p.getLots().add(lot);
+                    if (kw != null && !kw.isEmpty() && p.getMatchedLotId() == null
+                            && rs.getString("lot_code").toUpperCase().contains(kw)) {
+                        p.setMatchedLotId(rs.getLong("lot_id"));
+                    }
+                }
+            }
+        }
     }
 
     /** Danh mục cho các ô lọc (loài, vùng trồng, mức rang): tải 1 lần khi mở trang. */

@@ -24,7 +24,7 @@
         <div class="hero-icon">🛒</div>
         <div class="hero-text">
           <div class="hero-title">Bán hàng tại quầy</div>
-          <div class="hero-sub">Chọn gói cà phê, thu tiền và xác nhận đơn · tự trừ kho theo lô hạn gần nhất</div>
+          <div class="hero-sub">Chọn gói cà phê, thu tiền và xác nhận đơn · trừ kho theo đúng mã lô</div>
         </div>
       </div>
       <div class="page-nav">
@@ -106,13 +106,20 @@
             <div class="order-head">
               <div>
                 <div class="order-no" id="orderNo">Đơn mới</div>
-                <div class="muted" id="orderMeta">Bấm + ở gói cà phê để bắt đầu</div>
+                <div class="muted" id="orderMeta">Quét mã lô hoặc bấm + ở gói để bắt đầu</div>
               </div>
               <div class="order-head-right">
                 <span id="orderStatus"></span>
                 <button class="btn btn-sm" id="btnNewOrder" title="Để đơn này chờ, bắt đầu đơn trống">+ Đơn mới</button>
                 <button class="btn btn-sm" id="btnPendingList" title="Mở lại đơn đang chờ để thu tiền, xác nhận">🕒 Đơn chờ <span class="count-badge" id="pendingBadge">0</span></button>
               </div>
+            </div>
+
+                        <!-- Quét mã lô: máy quét USB gõ vào ô này rồi tự Enter; 📷 quét bằng camera -->
+            <div class="scan-bar">
+              <span>▦</span>
+              <input type="text" id="scanInput" placeholder="Quét hoặc nhập mã lô rồi Enter" autocomplete="off" />
+              <button class="btn btn-sm" id="btnCamera" title="Quét QR bằng camera">📷 Camera</button>
             </div>
 
             <!-- Thông báo lỗi (vượt tồn, chưa có giá...) -->
@@ -154,7 +161,7 @@
               <button class="btn btn-ghost-danger" id="btnCancelOrder" disabled>Hủy đơn</button>
               <button class="btn btn-primary btn-big" id="btnConfirm" disabled>XÁC NHẬN ĐƠN</button>
             </div>
-            <div class="hint">Xác nhận khi đã thu đủ tiền. Hệ thống tự trừ kho, lấy lô hạn gần nhất trước.</div>
+            <div class="hint">Xác nhận khi đã thu đủ tiền. Kho trừ đúng các lô đã chọn / đã quét.</div>
           </div>
         </div>
       </div>
@@ -202,6 +209,23 @@
           </div>
         </div>
       </div>
+
+            <!-- Quét QR lô bằng camera (giống máy quét) -->
+      <div id="modal-camera" class="modal">
+        <div class="modal-box modal-sm">
+          <div class="modal-head">
+            <span>Quét mã lô bằng camera</span>
+            <a href="#ban-hang" class="icon-btn">✕</a>
+          </div>
+          <video id="camVideo" class="cam-video" playsinline muted></video>
+          <canvas id="camCanvas" style="display: none"></canvas>
+          <div class="wait" id="camStatus">Đang mở camera…</div>
+          <div class="modal-actions">
+            <a href="#ban-hang" class="btn">Đóng</a>
+          </div>
+        </div>
+      </div>
+
             <!-- Hủy đơn chưa xác nhận (135): chưa trừ kho, chưa thu tiền -> chỉ cần lý do -->
       <div id="modal-huy" class="modal">
         <div class="modal-box modal-sm">

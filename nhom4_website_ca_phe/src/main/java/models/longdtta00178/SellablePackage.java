@@ -20,6 +20,10 @@ public class SellablePackage {
     private Integer sellableQty;
     /** Có lô còn hàng sắp hết hạn (hệ thống sẽ trừ lô này trước). */
     private Boolean nearExpiry;
+        /** Lô còn hạn, còn hàng: {lotId, lotCode, expiryDate, qty, nearExpiry}, hạn gần nhất trước */
+    private java.util.List<java.util.Map<String, Object>> lots = new java.util.ArrayList<>();
+    /** Lô khớp từ khóa tìm kiếm (tìm theo mã lô) -> ô chọn lô chọn sẵn lô này */
+    private Long matchedLotId;
 
     public SellablePackage() {}
 
@@ -49,6 +53,9 @@ public class SellablePackage {
     public void setSalePrice(BigDecimal salePrice) { this.salePrice = salePrice; }
     public Integer getSellableQty() { return sellableQty; }
     public void setSellableQty(Integer sellableQty) { this.sellableQty = sellableQty; }
+        public java.util.List<java.util.Map<String, Object>> getLots() { return lots; }
+    public Long getMatchedLotId() { return matchedLotId; }
+    public void setMatchedLotId(Long matchedLotId) { this.matchedLotId = matchedLotId; }
     public Boolean getNearExpiry() { return nearExpiry; }
     public void setNearExpiry(Boolean nearExpiry) { this.nearExpiry = nearExpiry; }
 }

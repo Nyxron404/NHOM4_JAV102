@@ -25,6 +25,10 @@ public class SalesLineAllocation {
     private LocalDate expiryDate;
     /** Lô sắp hết hạn (trong số ngày inventory.near_expiry_days) */
     private Boolean nearExpiry;
+        /** Số túi được quét QR (cho phép bán âm phần này) */
+    private Integer scannedQty;
+    /** Tồn hiện tại của lô (đơn chờ: để cảnh báo vượt tồn) */
+    private Integer lotStock;
 
     public SalesLineAllocation() {}
 
@@ -46,6 +50,10 @@ public class SalesLineAllocation {
     public void setLotCode(String lotCode) { this.lotCode = lotCode; }
     public LocalDate getExpiryDate() { return expiryDate; }
     public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
+        public Integer getScannedQty() { return scannedQty; }
+    public void setScannedQty(Integer scannedQty) { this.scannedQty = scannedQty; }
+    public Integer getLotStock() { return lotStock; }
+    public void setLotStock(Integer lotStock) { this.lotStock = lotStock; }
     public Boolean getNearExpiry() { return nearExpiry; }
     public void setNearExpiry(Boolean nearExpiry) { this.nearExpiry = nearExpiry; }
 

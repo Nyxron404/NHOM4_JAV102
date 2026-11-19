@@ -64,8 +64,13 @@ public final class SalesJson {
         field(sb, "sellableQty", p.getSellableQty()).append(',');
         field(sb, "nearExpiry", p.getNearExpiry()).append(',');
         field(sb, "lowStock", p.getLowStock()).append(',');
-        field(sb, "canSell", p.getCanSell());
-        sb.append('}');
+                field(sb, "canSell", p.getCanSell()).append(',');
+        field(sb, "matchedLotId", p.getMatchedLotId()).append(",\"lots\":[");
+        for (int i = 0; i < p.getLots().size(); i++) {
+            if (i > 0) sb.append(',');
+            sb.append(object(p.getLots().get(i)));
+        }
+        sb.append("]}");
     }
 
     /**
@@ -146,6 +151,9 @@ public final class SalesJson {
             if (i > 0) sb.append(',');
             sb.append('{');
             field(sb, "salesLineId", a.getSalesLineId()).append(',');
+                        field(sb, "lotId", a.getLotId()).append(',');
+            field(sb, "scannedQty", a.getScannedQty()).append(',');
+            field(sb, "lotStock", a.getLotStock()).append(',');
             field(sb, "variantName", a.getVariantName()).append(',');
             field(sb, "weightG", a.getWeightG()).append(',');
             field(sb, "wholeBean", a.getWholeBean()).append(',');
