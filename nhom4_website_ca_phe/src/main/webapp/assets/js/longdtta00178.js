@@ -404,9 +404,10 @@ function bindOrderEvents() {
     });
 
     // Đơn mới: để đơn hiện tại ở trạng thái chờ (xem lại ở tab Hóa đơn), bắt đầu đơn trống
-    document.getElementById("btnNewOrder").addEventListener("click", () => {
+        document.getElementById("btnNewOrder").addEventListener("click", () => {
         saveOrder(null);
         showOrderMessage("");
+        loadOverview();                  // cập nhật số đơn chờ
     });
 }
 
@@ -450,6 +451,7 @@ async function loadOverview() {
         document.getElementById("statConfirmed").textContent = data.confirmedToday;
         document.getElementById("statToday").textContent = "Hôm nay " + new Date().toLocaleDateString("vi-VN");
         document.getElementById("statPending").textContent = data.pendingCount;
+                document.getElementById("pendingBadge").textContent = data.pendingCount;
         storeInfo = data;
     } catch (error) {
         console.error("Không tải được chỉ số:", error);
@@ -766,6 +768,108 @@ function bindVnpayEvents() {
     });
 }
 
+/* =====================================================================
+   MỞ LẠI ĐƠN CHỜ THANH TOÁN
+   Đơn để chờ (bấm "+ Đơn mới") vẫn nằm ở DB với trạng thái PENDING.
+   Mở lại -> đơn thành đơn đang lập: thêm/bớt gói, thu tiền mặt / VNPay, xác nhận, hủy như bình thường.
+   Danh sách lấy từ API trang hóa đơn: ../../api/hoa-don?action=list&status=PENDING
+   ===================================================================== */
+
+const API_PENDING = "../../api/hoa-don";
+let pendingPage = 1;
+
+async function openPendingList() {
+    pendingPage = 1;
+    document.getElementById("pendingSearch").value = "";
+    location.hash = "#modal-don-cho";
+    await loadPendingList(false);
+    document.getElementById("pendingSearch").focus();
+}
+
+// append = true: bấm "Xem thêm" (nối thêm trang sau)
+async function loadPendingList(append) {
+    const params = new URLSearchParams({
+        action: "list",
+        status: "PENDING",
+        keyword: document.getElementById("pendingSearch").value.trim(),
+        page: pendingPage
+    });
+    const list = document.getElementById("pendingList");
+    let data;
+    try {
+        data = await getJson(API_PENDING + "?" + params);
+    } catch (error) {
+        document.getElementById("pendingInfo").textContent = "Lỗi: " + error.message;
+        return;
+    }
+
+    const currentId = currentOrder ? currentOrder.invoice.salesInvoiceId : null;
+    const html = data.rows.map(r => `
+        <div class="pending-item ${r.salesInvoiceId === currentId ? "pending-current" : ""}" data-id="${r.salesInvoiceId}">
+          <div>
+            <b>${esc(r.invoiceNo)}</b>
+            <div class="sub">${dateTimeText(r.createdAt)} · ${esc(r.cashierName)}</div>
+          </div>
+          <div class="pending-right">
+            <b>${money(r.totalAmount)}</b>
+            ${r.salesInvoiceId === currentId
+                ? '<span class="sub">Đang mở</span>'
+                : '<button class="btn btn-sm btn-primary">Mở đơn</button>'}
+          </div>
+        </div>`).join("");
+    list.innerHTML = append ? list.innerHTML + html : html;
+
+    if (!append && data.rows.length === 0) {
+        list.innerHTML = '<div class="order-empty">Không có đơn chờ thanh toán.</div>';
+    }
+    document.getElementById("pendingInfo").textContent = data.total + " đơn đang chờ · mới nhất trước";
+    if (!document.getElementById("pendingSearch").value.trim()) {
+        document.getElementById("pendingBadge").textContent = data.total;
+    }
+    document.getElementById("btnPendingMore").style.display =
+        pendingPage * data.pageSize < data.total ? "" : "none";
+}
+
+// Mở 1 đơn chờ thành đơn đang lập
+async function openPendingOrder(id) {
+    try {
+        const order = await getJson(API_ORDER + "?id=" + id);
+        if (order.invoice.status !== "PENDING") {
+            alert("Đơn " + order.invoice.invoiceNo + " đã được xác nhận hoặc hủy ở máy khác.");
+            loadPendingList(false);
+            return;
+        }
+        stopVnpayPolling();                                   // QR của đơn cũ (nếu đang mở) ngừng theo dõi
+        document.getElementById("cashGiven").value = "";
+        saveOrder(order);
+        showOrderMessage("");
+        location.hash = "#ban-hang";
+    } catch (error) {
+        alert("Không mở được đơn: " + error.message);
+    }
+}
+
+function bindPendingEvents() {
+    document.getElementById("btnPendingList").addEventListener("click", openPendingList);
+
+    document.getElementById("pendingList").addEventListener("click", e => {
+        const item = e.target.closest(".pending-item");
+        if (item && !item.classList.contains("pending-current")) openPendingOrder(Number(item.dataset.id));
+    });
+
+    // Gõ tìm: đợi 300ms sau phím cuối mới gọi API
+    let timer = null;
+    document.getElementById("pendingSearch").addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { pendingPage = 1; loadPendingList(false); }, 300);
+    });
+
+    document.getElementById("btnPendingMore").addEventListener("click", () => {
+        pendingPage++;
+        loadPendingList(true);
+    });
+}
+
 /* ---------- Khởi động ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
     bindFilters();
@@ -774,6 +878,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadCurrentOrder();
     loadOverview();
     bindVnpayEvents();
+        bindPendingEvents();
     try {
         await loadFilterOptions();
     } catch (error) {

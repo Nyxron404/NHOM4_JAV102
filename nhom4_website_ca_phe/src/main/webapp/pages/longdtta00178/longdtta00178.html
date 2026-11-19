@@ -110,6 +110,7 @@
               <div class="order-head-right">
                 <span id="orderStatus"></span>
                 <button class="btn btn-sm" id="btnNewOrder" title="Để đơn này chờ, bắt đầu đơn trống">+ Đơn mới</button>
+                <button class="btn btn-sm" id="btnPendingList" title="Mở lại đơn đang chờ để thu tiền, xác nhận">🕒 Đơn chờ <span class="count-badge" id="pendingBadge">0</span></button>
               </div>
             </div>
 
@@ -182,7 +183,24 @@
           </div>
         </div>
       </div>
-
+            <!-- Danh sách đơn chờ thanh toán: mở lại 1 đơn để thu tiền, xác nhận (JS điền) -->
+      <div id="modal-don-cho" class="modal">
+        <div class="modal-box">
+          <div class="modal-head">
+            <span>Đơn chờ thanh toán</span>
+            <a href="#ban-hang" class="icon-btn">✕</a>
+          </div>
+          <div class="field">
+            <input type="text" id="pendingSearch" placeholder="Tìm theo mã đơn, VD: 0009" />
+          </div>
+          <div class="muted" id="pendingInfo"></div>
+          <div id="pendingList"></div>
+          <div class="modal-actions">
+            <button class="btn" id="btnPendingMore" style="display: none">Xem thêm</button>
+            <a href="#ban-hang" class="btn">Đóng</a>
+          </div>
+        </div>
+      </div>
             <!-- Hủy đơn chưa xác nhận (135): chưa trừ kho, chưa thu tiền -> chỉ cần lý do -->
       <div id="modal-huy" class="modal">
         <div class="modal-box modal-sm">
