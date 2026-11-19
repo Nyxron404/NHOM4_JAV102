@@ -179,9 +179,40 @@ public class SalesProductDAO {
                     lot.put("qty", rs.getInt("qty"));
                     lot.put("nearExpiry", rs.getBoolean("near_expiry"));
                     p.getLots().add(lot);
-                    if (kw != null && !kw.isEmpty() && p.getMatchedLotId() == null
+                                        if (kw != null && !kw.isEmpty() && p.getMatchedLotId() == null
                             && rs.getString("lot_code").toUpperCase().contains(kw)) {
                         p.setMatchedLotId(rs.getLong("lot_id"));
+                    }
+                }
+            }
+
+            // Tìm theo mã lô mà lô đó không bán được -> ghi chú, không chọn sẵn lô khác
+            if (kw != null && !kw.isEmpty()) {
+                String sqlMatched = """
+                        SELECT pil.package_id, lo.lot_code, lo.expiry_date,
+                               COALESCE(SUM(m.quantity_change), 0) AS qty,
+                               lo.expiry_date < (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS expired
+                        FROM lots lo
+                        JOIN purchase_invoice_lines pil ON pil.purchase_line_id = lo.purchase_line_id
+                        LEFT JOIN stock_movements m     ON m.lot_id = lo.lot_id
+                        WHERE pil.package_id = ANY (?) AND lo.lot_code ILIKE '%' || ? || '%'
+                        GROUP BY pil.package_id, lo.lot_id, lo.lot_code, lo.expiry_date
+                        ORDER BY lo.expiry_date DESC
+                        """;
+                try (PreparedStatement ps2 = con.prepareStatement(sqlMatched)) {
+                    ps2.setArray(1, con.createArrayOf("integer", byId.keySet().toArray()));
+                    ps2.setString(2, keyword.trim());
+                    try (ResultSet rs = ps2.executeQuery()) {
+                        while (rs.next()) {
+                            SellablePackage p = byId.get(rs.getInt("package_id"));
+                            if (p.getMatchedLotId() != null || p.getMatchedLotNote() != null) continue;
+                            java.time.LocalDate exp = rs.getObject("expiry_date", java.time.LocalDate.class);
+                            p.setMatchedLotNote("Lô " + rs.getString("lot_code") + (rs.getBoolean("expired")
+                                    ? " đã hết hạn ngày " + exp.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                      + ", không bán được"
+                                    : " đã hết hàng trên hệ thống (tồn " + rs.getInt("qty")
+                                      + "). Có hàng thật thì quét QR trên túi"));
+                        }
                     }
                 }
             }

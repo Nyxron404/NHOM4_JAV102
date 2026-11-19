@@ -476,57 +476,86 @@ select:focus {
 }
 
 .pkg {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 8px;
-    padding: 6px 4px;
-    border-radius: 6px;
+    column-gap: 10px;
+    row-gap: 2px;
+    padding: 10px 6px;
+    border-radius: 8px;
+}
+
+.pkg + .pkg {
+    border-top: 1px dashed #EAE2D6;
 }
 
 .pkg:hover {
     background-color: #FAF7F2;
 }
 
+/* Hàng 1: tên gói ........ giá */
 .pkg-name {
-    flex: 1;
-    min-width: 0;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: bold;
-}
-
-.pkg-sku {
-    font-size: 11px;
-    font-weight: normal;
-    color: #A89A8E;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .pkg-price {
-    width: 76px;
     text-align: right;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: bold;
     color: #8B5A2B;
+    white-space: nowrap;
+}
+
+/* Hàng 2: SKU ........ còn bao nhiêu */
+.pkg-sku {
+    font-size: 12px;
+    color: #A89A8E;
+    word-break: break-all;
 }
 
 .pkg-stock {
-    width: 84px;
-    white-space: nowrap;
     text-align: right;
-    font-size: 12px;
+    font-size: 13px;
     color: #5C4A3D;
+    white-space: nowrap;
+}
+
+/* Hàng 3: chọn lô + nút thêm */
+.pkg-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.lot-select {
+    flex: 1;
+    min-width: 0;
+    height: 34px;
+    padding: 0 8px;
+    border: 1px solid #EAE2D6;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    font-size: 13px;
+    color: #2C1E16;
+}
+
+.lot-none {
+    flex: 1;
+    font-size: 13px;
+    color: #B5A99E;
 }
 
 .pkg-add {
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
     border: none;
     border-radius: 50%;
     background-color: #D97706;
     color: #FFFFFF;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: bold;
     flex-shrink: 0;
 }
@@ -1350,4 +1379,14 @@ img.qr {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.pkg-note {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background-color: #FEF3E2;
+    color: #B45F04;
+    font-size: 13px;
 }

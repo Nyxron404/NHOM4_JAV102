@@ -65,7 +65,8 @@ public final class SalesJson {
         field(sb, "nearExpiry", p.getNearExpiry()).append(',');
         field(sb, "lowStock", p.getLowStock()).append(',');
                 field(sb, "canSell", p.getCanSell()).append(',');
-        field(sb, "matchedLotId", p.getMatchedLotId()).append(",\"lots\":[");
+                field(sb, "matchedLotId", p.getMatchedLotId()).append(',');
+        field(sb, "matchedLotNote", p.getMatchedLotNote()).append(",\"lots\":[");
         for (int i = 0; i < p.getLots().size(); i++) {
             if (i > 0) sb.append(',');
             sb.append(object(p.getLots().get(i)));

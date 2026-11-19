@@ -141,27 +141,35 @@ function packageHtml(p) {
 
     // Ô chọn lô: lô còn hạn, còn hàng, hạn gần nhất đứng đầu (chọn sẵn); tìm theo mã lô thì chọn sẵn lô đó
     const lots = p.lots || [];
-    const selected = p.matchedLotId || (lots[0] && lots[0].lotId);
-    const lotSelect = lots.length === 0 ? "" : `
-            <div class="pkg-lot">
-              <select class="lot-select" title="Chọn đúng lô của túi giao cho khách">
-                ${lots.map(l => `<option value="${l.lotId}" ${l.lotId === selected ? "selected" : ""}>
-                  ${esc(l.lotCode)} · HSD ${dateShort(l.expiryDate)} · còn ${l.qty}${l.nearExpiry ? " · cận hạn" : ""}
-                </option>`).join("")}
-              </select>
-            </div>`;
+        // Lô đang tìm không bán được (hết hàng / hết hạn): không chọn sẵn lô khác, bắt người bán tự chọn
+    const selected = p.matchedLotNote ? null : (p.matchedLotId || (lots[0] && lots[0].lotId));
+    const lotBox = lots.length === 0
+        ? '<span class="lot-none">Không có lô bán được</span>'
+        : `<select class="lot-select" title="Chọn đúng lô của túi giao cho khách">
+                     ${p.matchedLotNote ? '<option value="" selected disabled>— Chọn lô khác —</option>' : ""}
+             ${lots.map(l => `<option value="${l.lotId}" title="${esc(l.lotCode)}" ${l.lotId === selected ? "selected" : ""}>
+               Lô ${esc(shortLot(l.lotCode, p.sku))} · HSD ${dateShort(l.expiryDate)} · còn ${l.qty}${l.nearExpiry ? " · cận hạn" : ""}
+             </option>`).join("")}
+           </select>`;
 
     return `
           <div class="${rowClass}">
-            <div class="pkg-name">${weightText(p.weightG)} · ${form}
-              <div class="pkg-sku" title="${esc(p.grindName)}">${esc(p.sku)}</div>
-            </div>
+            <div class="pkg-name">${weightText(p.weightG)} · ${form}</div>
             <div class="pkg-price">${p.salePrice === null ? "—" : money(p.salePrice)}</div>
+            <div class="pkg-sku" title="${esc(p.grindName)}">${esc(p.sku)}</div>
             <div class="pkg-stock">${stockText}</div>
-            <button class="pkg-add" title="Thêm 1 túi của lô đang chọn"
-                    ${p.canSell && lots.length ? "" : "disabled"}>+</button>
-            ${lotSelect}
+                        ${p.matchedLotNote ? `<div class="pkg-note">⚠ ${esc(p.matchedLotNote)}</div>` : ""}
+            <div class="pkg-actions">
+              ${lotBox}
+              <button class="pkg-add" title="Thêm 1 túi của lô đang chọn"
+                      ${p.canSell && lots.length ? "" : "disabled"}>+</button>
+            </div>
           </div>`;
+}
+
+// Mã lô = "L" + ngày rang + "-" + SKU -> bỏ phần SKU (đã hiện ở trên) cho gọn: L261108-CD-MOKA-WS-250-WB -> L261108
+function shortLot(lotCode, sku) {
+    return lotCode.endsWith("-" + sku) ? lotCode.slice(0, -(sku.length + 1)) : lotCode;
 }
 
 // "2027-11-08" -> 08/11/27
@@ -216,8 +224,12 @@ function bindFilters() {
     document.getElementById("productGrid").addEventListener("click", e => {
                 const button = e.target.closest(".pkg-add");
         if (!button || button.disabled) return;
-        const select = button.closest(".pkg").querySelector(".lot-select");
-        if (select) addToOrder({ lotId: Number(select.value) });
+                const select = button.closest(".pkg").querySelector(".lot-select");
+        if (!select || !select.value) {
+            showOrderMessage("Chọn lô trước khi bấm +");
+            return;
+        }
+        addToOrder({ lotId: Number(select.value) });
     });
 }
 
