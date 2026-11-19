@@ -3,7 +3,9 @@ package controllers.longdtta00178;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Map;
+import models.longdtta00178.Payment;
+import models.longdtta00178.SalesLineAllocation;
 import models.longdtta00178.SalesProductCard;
 import models.longdtta00178.SellablePackage;
 import models.longdtta00178.SalesInvoice;
@@ -93,7 +95,11 @@ public final class SalesJson {
         /**
      * Đơn đang lập -> {"invoice":{...},"lines":[{...},...]}
      */
-    public static String order(SalesInvoice inv, List<SalesInvoiceLine> lines) {
+        /**
+     * Đơn đang lập -> {"invoice":{...},"lines":[...],"payments":[...],"allocations":[...]}
+     */
+    public static String order(SalesInvoice inv, List<SalesInvoiceLine> lines,
+                               List<Payment> payments, List<SalesLineAllocation> allocations) {
         StringBuilder sb = new StringBuilder("{\"invoice\":{");
         field(sb, "salesInvoiceId", inv.getSalesInvoiceId()).append(',');
         field(sb, "invoiceNo", inv.getInvoiceNo()).append(',');
@@ -120,7 +126,48 @@ public final class SalesJson {
             field(sb, "maxQty", l.getMaxQty());
             sb.append('}');
         }
+        sb.append("],\"payments\":[");
+        for (int i = 0; i < payments.size(); i++) {
+            Payment p = payments.get(i);
+            if (i > 0) sb.append(',');
+            sb.append('{');
+            field(sb, "paymentId", p.getPaymentId()).append(',');
+            field(sb, "methodCode", p.getMethodCode()).append(',');
+            field(sb, "methodName", p.getMethodName()).append(',');
+            field(sb, "amount", p.getAmount()).append(',');
+            field(sb, "status", p.getStatus()).append(',');          // PENDING | SUCCESS | FAILED | CANCELLED
+            field(sb, "paymentKind", p.getPaymentKind()).append(','); // CHARGE | REFUND
+            field(sb, "paidAt", p.getPaidAt());
+            sb.append('}');
+        }
+        sb.append("],\"allocations\":[");
+        for (int i = 0; i < allocations.size(); i++) {
+            SalesLineAllocation a = allocations.get(i);
+            if (i > 0) sb.append(',');
+            sb.append('{');
+            field(sb, "salesLineId", a.getSalesLineId()).append(',');
+            field(sb, "variantName", a.getVariantName()).append(',');
+            field(sb, "weightG", a.getWeightG()).append(',');
+            field(sb, "wholeBean", a.getWholeBean()).append(',');
+            field(sb, "lotCode", a.getLotCode()).append(',');
+            field(sb, "expiryDate", a.getExpiryDate()).append(',');   // 2026-12-08
+            field(sb, "nearExpiry", a.getNearExpiry()).append(',');
+            field(sb, "quantity", a.getQuantity());
+            sb.append('}');
+        }
         return sb.append("]}").toString();
+    }
+
+    /** Map phẳng -> {"key":value,...}  (dùng cho chỉ số trong ngày) */
+    public static String object(Map<String, Object> map) {
+        StringBuilder sb = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, Object> e : map.entrySet()) {
+            if (!first) sb.append(',');
+            first = false;
+            field(sb, e.getKey(), e.getValue());
+        }
+        return sb.append('}').toString();
     }
 
     /** {"error":"..."} */

@@ -32,6 +32,11 @@ public class Payment {
     private OffsetDateTime createdAt;
     /** paid_at | TIMESTAMPTZ */
     private OffsetDateTime paidAt;
+    // ---- Thông tin hiển thị (tính từ JOIN, không lưu DB) ----
+    /** payment_methods.method_code: CASH | VNPAY */
+    private String methodCode;
+    /** payment_methods.method_name: Tiền mặt, VNPay */
+    private String methodName;
 
     public Payment() {}
 
@@ -53,7 +58,10 @@ public class Payment {
     public void setPaidAt(OffsetDateTime paidAt) { this.paidAt = paidAt; }
     public PaymentKind getPaymentKind() { return paymentKind; }
     public void setPaymentKind(PaymentKind paymentKind) { this.paymentKind = paymentKind; }
-
+    public String getMethodCode() { return methodCode; }
+    public void setMethodCode(String methodCode) { this.methodCode = methodCode; }
+    public String getMethodName() { return methodName; }
+    public void setMethodName(String methodName) { this.methodName = methodName; }
     @Override
     public String toString() {
         return "Payment{" + "paymentId=" + paymentId + ", salesInvoiceId=" + salesInvoiceId + ", paymentMethodId=" + paymentMethodId + ", amount=" + amount + ", status=" + status + ", confirmedBy=" + confirmedBy + ", createdAt=" + createdAt + ", paidAt=" + paidAt + "}";

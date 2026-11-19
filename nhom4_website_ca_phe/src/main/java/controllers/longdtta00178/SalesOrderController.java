@@ -1,6 +1,7 @@
 package controllers.longdtta00178;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 
 import dao.longdtta00178.SalesOrderDAO;
@@ -19,6 +20,10 @@ import models.longdtta00178.SalesInvoice;
  *   POST /api/ban-hang/don  action=addPackage  invoiceId, packageId, quantity(mặc định 1)   -> [132]
  *   POST /api/ban-hang/don  action=updateQty   invoiceId, lineId, quantity                  -> [132.2]
  *   POST /api/ban-hang/don  action=removeLine  invoiceId, lineId                            -> [134]
+ *   POST /api/ban-hang/don  action=confirm     invoiceId, cashGiven (tiền khách đưa)        -> [138 + 140 + 142]
+ *   POST /api/ban-hang/don  action=cancel      invoiceId, reason                            -> [135]
+ *   POST /api/ban-hang/don  action=printLog    invoiceId                                    -> [145] ghi lần xuất hóa đơn
+ *   GET  /api/ban-hang/don?action=overview                -> chỉ số trong ngày + thông tin in hóa đơn
  *
  * Mọi lệnh thành công đều trả lại toàn bộ đơn: {"invoice":{...},"lines":[...]} để JS vẽ lại.
  * Lỗi: {"error":"..."} với mã 400 (lỗi nghiệp vụ / tham số), 404 (không có đơn), 500 (lỗi DB).
@@ -32,6 +37,10 @@ public class SalesOrderController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("application/json;charset=UTF-8");
         try {
+            if ("overview".equals(req.getParameter("action"))) {
+                resp.getWriter().write(SalesJson.object(dao.findOverview()));
+                return;
+            }
             long invoiceId = Long.parseLong(req.getParameter("id"));
             writeOrder(resp, invoiceId);
         } catch (NumberFormatException e) {
@@ -65,6 +74,12 @@ public class SalesOrderController extends HttpServlet {
                             Integer.parseInt(req.getParameter("quantity")));
                 } else if ("removeLine".equals(action)) {
                     dao.removeLine(invoiceId, Long.parseLong(req.getParameter("lineId")));
+                } else if ("confirm".equals(action)) {
+                    dao.confirmOrder(invoiceId, currentUserId(req), toMoney(req.getParameter("cashGiven")));
+                } else if ("cancel".equals(action)) {
+                    dao.cancelPendingOrder(invoiceId, currentUserId(req), req.getParameter("reason"));
+                } else if ("printLog".equals(action)) {
+                    dao.logExportInvoice(invoiceId, currentUserId(req));
                 } else {
                     fail(resp, 400, "Thao tác không hợp lệ: " + action);
                     return;
@@ -82,19 +97,20 @@ public class SalesOrderController extends HttpServlet {
         }
     }
 
-    /** Đọc lại đơn + dòng hàng rồi trả JSON */
+    /** Đọc lại đơn + dòng hàng + thanh toán + lô đã trừ rồi trả JSON */
     private void writeOrder(HttpServletResponse resp, long invoiceId) throws IOException, SQLException {
         SalesInvoice invoice = dao.findInvoice(invoiceId);
         if (invoice == null) {
             fail(resp, 404, "Không tìm thấy đơn");
             return;
         }
-        resp.getWriter().write(SalesJson.order(invoice, dao.findLines(invoiceId)));
+        resp.getWriter().write(SalesJson.order(invoice, dao.findLines(invoiceId),
+                dao.findPayments(invoiceId), dao.findAllocations(invoiceId)));
     }
 
     /**
-     * Người thao tác: session "userId" (phần đăng nhập ghi vào).
-     * Chưa có đăng nhập thì tạm dùng tài khoản quầy STAFF.
+     * Người thao tác: session "userId" (AuthSession.USER_ID của phần đăng nhập).
+     * Chưa đăng nhập thì tạm dùng tài khoản quầy STAFF.
      */
     private int currentUserId(HttpServletRequest req) throws SQLException {
         HttpSession session = req.getSession(false);
@@ -104,6 +120,13 @@ public class SalesOrderController extends HttpServlet {
         Integer fallback = dao.findDefaultUserId();
         if (fallback == null) throw new IllegalArgumentException("Chưa có tài khoản người dùng nào");
         return fallback;
+    }
+
+    /** "500.000" hoặc "500000" -> 500000; trống -> null */
+    private static BigDecimal toMoney(String value) {
+        if (value == null) return null;
+        String digits = value.replaceAll("[^0-9]", "");
+        return digits.isEmpty() ? null : new BigDecimal(digits);
     }
 
     private static void fail(HttpServletResponse resp, int status, String message) throws IOException {

@@ -1066,6 +1066,37 @@ select:focus {
     margin-bottom: 6px;
 }
 
+/* Khách đưa chưa đủ tiền */
+.kv-short {
+    color: #B42318;
+}
+
+.btn-big:disabled {
+    background-color: #E5C9A8;
+    border-color: #E5C9A8;
+}
+
+/* ===== IN HÓA ĐƠN: chỉ in phần .bill, ẩn mọi thứ khác ===== */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .bill,
+    .bill * {
+        visibility: visible;
+    }
+
+    .bill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 72mm;            /* khổ giấy in nhiệt 80mm */
+        border: none;
+        padding: 0;
+    }
+}
+
 /* ===== MÀN NHỎ ===== */
 @media (max-width: 1100px) {
     .pos,

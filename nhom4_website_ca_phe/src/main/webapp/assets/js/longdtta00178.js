@@ -242,6 +242,7 @@ function saveOrder(order) {
         localStorage.removeItem(ORDER_KEY);
     }
     renderOrder();
+    updatePayUI();
 }
 
 // Mở trang: lấy lại đơn đang lập (nếu có)
@@ -409,11 +410,244 @@ function bindOrderEvents() {
     });
 }
 
+/* =====================================================================
+   THU TIỀN MẶT + XÁC NHẬN ĐƠN (138, 140, 142, 143) · HỦY ĐƠN (135)
+   IN HÓA ĐƠN (145, 146) · CHỈ SỐ TRONG NGÀY
+   ===================================================================== */
+
+let storeInfo = {};          // thông tin in hóa đơn (system_settings invoice.*)
+let lastConfirmed = null;    // đơn vừa xác nhận: {order, cashGiven, change} -> hộp thoại + in hóa đơn
+
+/* ---------- Tiền ---------- */
+// "500.000" -> 500000
+function parseMoney(text) {
+    const digits = String(text || "").replace(/[^0-9]/g, "");
+    return digits ? Number(digits) : 0;
+}
+
+function dueAmount() {
+    return currentOrder ? Number(currentOrder.invoice.dueAmount) : 0;
+}
+
+// Gợi ý tiền khách đưa: đủ tiền, làm tròn lên 50k / 100k / 500k
+function cashSuggestions(due) {
+    if (due <= 0) return [];
+    const list = [due];
+    [50000, 100000, 500000].forEach(step => {
+        const value = Math.ceil(due / step) * step;
+        if (!list.includes(value)) list.push(value);
+    });
+    return list.slice(0, 4);
+}
+
+/* ---------- Chỉ số trong ngày + thông tin cửa hàng ---------- */
+async function loadOverview() {
+    try {
+        const data = await getJson(API_ORDER + "?action=overview");
+        document.getElementById("statIncome").textContent = money(data.incomeToday);
+        document.getElementById("statIncomeSub").textContent =
+            "Tiền mặt " + money(data.cashToday) + " · VNPay " + money(data.onlineToday);
+        document.getElementById("statConfirmed").textContent = data.confirmedToday;
+        document.getElementById("statToday").textContent = "Hôm nay " + new Date().toLocaleDateString("vi-VN");
+        document.getElementById("statPending").textContent = data.pendingCount;
+        storeInfo = data;
+    } catch (error) {
+        console.error("Không tải được chỉ số:", error);
+    }
+}
+
+/* ---------- Khu thanh toán: bật/tắt nút, tiền thối ---------- */
+function updatePayUI() {
+    const hasLines = currentOrder && currentOrder.lines.length > 0;
+    const due = dueAmount();
+    const given = parseMoney(document.getElementById("cashGiven").value);
+
+    // Nút gợi ý tiền
+    document.getElementById("quickCash").innerHTML = cashSuggestions(due)
+        .map((v, i) => `<button class="btn btn-sm" data-cash="${v}">${i === 0 ? "Đủ tiền" : money(v)}</button>`)
+        .join("");
+
+    // Tiền thối
+    const change = given - due;
+    const changeBox = document.getElementById("cashChange");
+    if (due <= 0) {
+        changeBox.textContent = "0đ";
+    } else if (given === 0) {
+        changeBox.textContent = "—";
+    } else if (change < 0) {
+        changeBox.textContent = "Còn thiếu " + money(-change);
+    } else {
+        changeBox.textContent = money(change);
+    }
+    changeBox.parentElement.classList.toggle("kv-short", given > 0 && change < 0);
+
+    document.getElementById("btnCancelOrder").disabled = !currentOrder;
+    document.getElementById("btnConfirm").disabled = !hasLines || (due > 0 && given < due);
+}
+
+/* ---------- Xác nhận đơn ---------- */
+async function confirmOrder() {
+    if (!currentOrder) return;
+    const due = dueAmount();
+    const given = parseMoney(document.getElementById("cashGiven").value);
+    const button = document.getElementById("btnConfirm");
+    button.disabled = true;                      // chống bấm 2 lần
+    try {
+        const order = await postOrder({
+            action: "confirm",
+            invoiceId: currentOrder.invoice.salesInvoiceId,
+            cashGiven: due > 0 ? given : ""
+        });
+        lastConfirmed = { order: order, cashGiven: due > 0 ? given : 0, change: due > 0 ? given - due : 0 };
+
+        document.getElementById("cashGiven").value = "";
+        saveOrder(null);                         // đơn đã đóng -> khung đơn trở về trống
+        showOrderMessage("");
+        showConfirmModal();
+        loadProducts();                          // tồn đã đổi
+        loadOverview();                          // thu hôm nay đã đổi
+    } catch (error) {
+        showOrderMessage(error.message);
+        updatePayUI();
+    }
+}
+
+function showConfirmModal() {
+    const { order, cashGiven, change } = lastConfirmed;
+    document.getElementById("confirmTitle").textContent = "✅ Đã xác nhận đơn " + order.invoice.invoiceNo;
+    document.getElementById("confirmTotal").textContent = money(order.invoice.totalAmount);
+    document.getElementById("confirmCash").textContent = money(cashGiven);
+    document.getElementById("confirmChange").textContent = money(change);
+
+    const rows = order.allocations.map(a => `
+        <tr>
+          <td>${esc(a.variantName)} ${weightText(a.weightG)} ${a.wholeBean ? "" : "xay"}</td>
+          <td>${esc(a.lotCode)} ${a.nearExpiry ? '<span class="tag-near">Cận hạn</span>' : ""}</td>
+          <td>${new Date(a.expiryDate).toLocaleDateString("vi-VN")}</td>
+          <td class="num">${a.quantity}</td>
+        </tr>`).join("");
+    document.getElementById("confirmLots").innerHTML = `
+        <table class="table table-sm">
+          <tr><th>Gói</th><th>Lô</th><th>Hạn dùng</th><th class="num">SL</th></tr>
+          ${rows}
+        </table>`;
+
+    const hasNear = order.allocations.some(a => a.nearExpiry);
+    document.getElementById("confirmHint").textContent = hasNear
+        ? "Có lô cận hạn: lấy đúng túi thuộc lô cận hạn giao cho khách."
+        : "Lấy đúng túi thuộc các lô trên giao cho khách.";
+
+    location.hash = "#modal-xac-nhan";
+}
+
+/* ---------- Hủy đơn chưa xác nhận ---------- */
+function openCancelModal() {
+    if (!currentOrder) return;
+    document.getElementById("cancelTitle").textContent = "Hủy đơn " + currentOrder.invoice.invoiceNo + "?";
+    document.getElementById("cancelNote").value = "";
+    document.getElementById("cancelMsg").style.display = "none";
+    location.hash = "#modal-huy";
+}
+
+async function cancelOrder() {
+    if (!currentOrder) return;
+    const reason = document.getElementById("cancelReason").value;
+    const note = document.getElementById("cancelNote").value.trim();
+    try {
+        await postOrder({
+            action: "cancel",
+            invoiceId: currentOrder.invoice.salesInvoiceId,
+            reason: note ? reason + " - " + note : reason
+        });
+        saveOrder(null);
+        location.hash = "#ban-hang";
+        loadOverview();
+    } catch (error) {
+        const box = document.getElementById("cancelMsg");
+        box.textContent = error.message;
+        box.style.display = "block";
+    }
+}
+
+/* ---------- In hóa đơn ---------- */
+function showBill() {
+    if (!lastConfirmed) return;
+    const { order, cashGiven, change } = lastConfirmed;
+    const inv = order.invoice;
+
+    document.getElementById("billStore").textContent = (storeInfo.storeName || "").toUpperCase();
+    document.getElementById("billAddress").textContent = storeInfo.address || "";
+    document.getElementById("billPhone").textContent = storeInfo.phone ? "ĐT: " + storeInfo.phone : "";
+    document.getElementById("billNo").textContent = "Số: " + inv.invoiceNo;
+    document.getElementById("billMeta").textContent =
+        dateTimeText(new Date().toISOString()) + " · Thu ngân: " + (inv.cashierName || "");
+
+    document.getElementById("billItems").innerHTML = order.lines.map(l => `
+        <div class="bill-item">
+          <div>${esc(l.variantName)} ${weightText(l.weightG)} ${l.wholeBean ? "nguyên hạt" : "xay sẵn"}</div>
+          <div class="kv"><span>${l.quantity} x ${Number(l.unitPrice).toLocaleString("vi-VN")}</span>
+            <span>${Number(l.lineAmount).toLocaleString("vi-VN")}</span></div>
+        </div>`).join("");
+    document.getElementById("billTotal").textContent = money(inv.totalAmount);
+
+    // Các khoản đã thu; tiền mặt thì in số khách đưa + tiền thối
+    document.getElementById("billPayments").innerHTML = order.payments
+        .filter(p => p.status === "SUCCESS" && p.paymentKind === "CHARGE")
+        .map(p => p.methodCode === "CASH" && cashGiven > 0
+            ? `<div class="kv"><span>Tiền mặt</span><span>${money(cashGiven)}</span></div>
+               <div class="kv"><span>Tiền thối</span><span>${money(change)}</span></div>`
+            : `<div class="kv"><span>${esc(p.methodName)}</span><span>${money(p.amount)}</span></div>`)
+        .join("");
+
+    document.getElementById("billFooter").innerHTML =
+        esc(storeInfo.footerNote || "Cảm ơn quý khách!") + "<br />Quét mã QR trên túi để xem thông tin cà phê.";
+
+    location.hash = "#modal-bill";
+}
+
+async function printBill() {
+    if (!lastConfirmed) return;
+    try {
+        await postOrder({ action: "printLog", invoiceId: lastConfirmed.order.invoice.salesInvoiceId });
+    } catch (error) {
+        console.error("Không ghi được nhật ký xuất hóa đơn:", error);
+    }
+    window.print();
+}
+
+/* ---------- Sự kiện ---------- */
+function bindPayEvents() {
+    const cashInput = document.getElementById("cashGiven");
+
+    // Gõ tiền: tự thêm dấu chấm ngăn cách, tính lại tiền thối
+    cashInput.addEventListener("input", () => {
+        const value = parseMoney(cashInput.value);
+        cashInput.value = value ? value.toLocaleString("vi-VN") : "";
+        updatePayUI();
+    });
+
+    // Nút gợi ý tiền
+    document.getElementById("quickCash").addEventListener("click", e => {
+        const button = e.target.closest("button[data-cash]");
+        if (!button) return;
+        cashInput.value = Number(button.dataset.cash).toLocaleString("vi-VN");
+        updatePayUI();
+    });
+
+    document.getElementById("btnConfirm").addEventListener("click", confirmOrder);
+    document.getElementById("btnCancelOrder").addEventListener("click", openCancelModal);
+    document.getElementById("btnDoCancel").addEventListener("click", cancelOrder);
+    document.getElementById("btnShowBill").addEventListener("click", showBill);
+    document.getElementById("btnDoPrint").addEventListener("click", printBill);
+}
+
 /* ---------- Khởi động ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
     bindFilters();
     bindOrderEvents();
+    bindPayEvents();
     loadCurrentOrder();
+    loadOverview();
     try {
         await loadFilterOptions();
     } catch (error) {

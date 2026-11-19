@@ -1,5 +1,5 @@
 package models.longdtta00178;
-
+import java.time.LocalDate;
 /**
  * Chi tiết trừ kho: dòng bán lấy từ lô nào (FEFO)
  * <p>Bảng: sales_line_allocations</p>
@@ -17,6 +17,14 @@ public class SalesLineAllocation {
     private Long lotId;
     /** quantity | INT | NOT NULL */
     private Integer quantity;
+        // ---- Thông tin hiển thị (tính từ JOIN, không lưu DB) ----
+    private String variantName;
+    private Integer weightG;
+    private Boolean wholeBean;
+    private String lotCode;
+    private LocalDate expiryDate;
+    /** Lô sắp hết hạn (trong số ngày inventory.near_expiry_days) */
+    private Boolean nearExpiry;
 
     public SalesLineAllocation() {}
 
@@ -28,6 +36,18 @@ public class SalesLineAllocation {
     public void setLotId(Long lotId) { this.lotId = lotId; }
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public String getVariantName() { return variantName; }
+    public void setVariantName(String variantName) { this.variantName = variantName; }
+    public Integer getWeightG() { return weightG; }
+    public void setWeightG(Integer weightG) { this.weightG = weightG; }
+    public Boolean getWholeBean() { return wholeBean; }
+    public void setWholeBean(Boolean wholeBean) { this.wholeBean = wholeBean; }
+    public String getLotCode() { return lotCode; }
+    public void setLotCode(String lotCode) { this.lotCode = lotCode; }
+    public LocalDate getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
+    public Boolean getNearExpiry() { return nearExpiry; }
+    public void setNearExpiry(Boolean nearExpiry) { this.nearExpiry = nearExpiry; }
 
     @Override
     public String toString() {

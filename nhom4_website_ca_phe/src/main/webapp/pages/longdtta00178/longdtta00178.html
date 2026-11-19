@@ -36,20 +36,21 @@
            =================================================================== -->
 
         <!-- Chỉ số trong ngày: nhân viên chỉ được xem thu trong ngày (payments SUCCESS hôm nay) -->
+                <!-- Chỉ số trong ngày: nhân viên chỉ được xem thu trong ngày (thu - hoàn, giao dịch SUCCESS hôm nay) -->
         <div class="stats">
           <div class="stat">
             <div class="stat-label">Thu hôm nay</div>
-            <div class="stat-value">0đ</div>
-            <div class="stat-sub">Tiền mặt 0đ · VNPay 0đ</div>
+            <div class="stat-value" id="statIncome">0đ</div>
+            <div class="stat-sub" id="statIncomeSub">Tiền mặt 0đ · VNPay 0đ</div>
           </div>
           <div class="stat">
             <div class="stat-label">Đơn đã xác nhận</div>
-            <div class="stat-value">0</div>
-            <div class="stat-sub">Hôm nay 18/11/2026</div>
+            <div class="stat-value" id="statConfirmed">0</div>
+            <div class="stat-sub" id="statToday">Hôm nay</div>
           </div>
           <div class="stat stat-warn">
             <div class="stat-label">Đơn chờ thanh toán</div>
-            <div class="stat-value">2</div>
+            <div class="stat-value" id="statPending">0</div>
             <div class="stat-sub"><a href="longdtta001782.html" class="link">Xem danh sách</a></div>
           </div>
         </div>
@@ -135,26 +136,21 @@
                 <a href="#modal-vnpay" class="pay-method">📱 VNPay (QR)</a>
               </div>
 
-              <!-- Tiền mặt (138): NV nhập tiền khách đưa -->
+                            <!-- Tiền mặt (138): NV nhập tiền khách đưa, JS tính tiền thối -->
               <div class="cash">
                 <div class="field">
                   <label>Khách đưa</label>
-                  <input type="text" value="500.000" />
+                  <input type="text" id="cashGiven" inputmode="numeric" autocomplete="off" />
                 </div>
-                <div class="quick">
-                  <button class="btn btn-sm">Đủ tiền</button>
-                  <button class="btn btn-sm">400.000</button>
-                  <button class="btn btn-sm">500.000</button>
-                  <button class="btn btn-sm">1.000.000</button>
-                </div>
-                <div class="kv kv-change"><span>Tiền thối lại</span><span>130.000đ</span></div>
+                <div class="quick" id="quickCash"></div>
+                <div class="kv kv-change"><span>Tiền thối lại</span><span id="cashChange">0đ</span></div>
               </div>
             </div>
 
-            <!-- Hủy đơn chưa xác nhận (135) / Xác nhận đơn (140) -> tự trừ kho FEFO (142) -->
+            <!-- Hủy đơn chưa xác nhận (135) / Xác nhận đơn (138 + 140) -> tự trừ kho FEFO (142) -->
             <div class="order-actions">
-              <a href="#modal-huy" class="btn btn-ghost-danger">Hủy đơn</a>
-              <a href="#modal-xac-nhan" class="btn btn-primary btn-big">XÁC NHẬN ĐƠN</a>
+              <button class="btn btn-ghost-danger" id="btnCancelOrder" disabled>Hủy đơn</button>
+              <button class="btn btn-primary btn-big" id="btnConfirm" disabled>XÁC NHẬN ĐƠN</button>
             </div>
             <div class="hint">Xác nhận khi đã thu đủ tiền. Hệ thống tự trừ kho, lấy lô hạn gần nhất trước.</div>
           </div>
@@ -186,16 +182,16 @@
         </div>
       </div>
 
-      <!-- Hủy đơn chưa xác nhận (135): chưa trừ kho, chưa thu tiền -> chỉ cần lý do -->
+            <!-- Hủy đơn chưa xác nhận (135): chưa trừ kho, chưa thu tiền -> chỉ cần lý do -->
       <div id="modal-huy" class="modal">
         <div class="modal-box modal-sm">
           <div class="modal-head">
-            <span>Hủy đơn HD261118-0002?</span>
+            <span id="cancelTitle">Hủy đơn?</span>
             <a href="#ban-hang" class="icon-btn">✕</a>
           </div>
           <div class="field">
             <label>Lý do hủy</label>
-            <select>
+            <select id="cancelReason">
               <option>Khách không mua nữa</option>
               <option>Tạo nhầm đơn</option>
               <option>Khác</option>
@@ -203,95 +199,68 @@
           </div>
           <div class="field">
             <label>Ghi chú</label>
-            <input type="text" placeholder="Không bắt buộc" />
+            <input type="text" id="cancelNote" placeholder="Không bắt buộc" />
           </div>
+          <div class="order-msg" id="cancelMsg"></div>
           <div class="hint">Đơn chưa xác nhận nên kho và tiền thu không thay đổi. QR VNPay đang chờ (nếu có) sẽ bị hủy.</div>
           <div class="modal-actions">
             <a href="#ban-hang" class="btn">Quay lại</a>
-            <a href="#ban-hang" class="btn btn-danger">Hủy đơn</a>
+            <button class="btn btn-danger" id="btnDoCancel">Hủy đơn</button>
           </div>
         </div>
       </div>
 
-      <!-- Xác nhận thành công + thông báo lô đã trừ (140, 142, 143) -->
+            <!-- Xác nhận thành công + thông báo lô đã trừ (140, 142, 143): JS điền -->
       <div id="modal-xac-nhan" class="modal">
         <div class="modal-box">
           <div class="modal-head">
-            <span>✅ Đã xác nhận đơn HD261118-0002</span>
+            <span id="confirmTitle">✅ Đã xác nhận đơn</span>
             <a href="#ban-hang" class="icon-btn">✕</a>
           </div>
-          <div class="kv"><span>Tổng tiền</span><b>370.000đ</b></div>
-          <div class="kv"><span>Khách đưa (tiền mặt)</span><span>500.000đ</span></div>
-          <div class="kv kv-change"><span>Tiền thối lại</span><span>130.000đ</span></div>
+          <div class="kv"><span>Tổng tiền</span><b id="confirmTotal">0đ</b></div>
+          <div class="kv"><span>Khách đưa (tiền mặt)</span><span id="confirmCash">0đ</span></div>
+          <div class="kv kv-change"><span>Tiền thối lại</span><span id="confirmChange">0đ</span></div>
 
           <div class="section-title">Hệ thống đã trừ kho</div>
-          <table class="table table-sm">
-            <tr>
-              <th>Gói</th>
-              <th>Lô</th>
-              <th>Hạn dùng</th>
-              <th class="num">SL</th>
-            </tr>
-            <tr>
-              <td>Robusta Honey 250g</td>
-              <td>L251208-FR-CUMGAR-HN-250-WB <span class="tag-near">Cận hạn</span></td>
-              <td>08/12/2026</td>
-              <td class="num">2</td>
-            </tr>
-            <tr>
-              <td>Culi Tây Nguyên 250g xay</td>
-              <td>L261108-FR-CULI-BMT-250-PH</td>
-              <td>08/05/2027</td>
-              <td class="num">1</td>
-            </tr>
-          </table>
-          <div class="hint">Lấy đúng túi thuộc lô cận hạn giao cho khách.</div>
+          <div id="confirmLots"></div>
+          <div class="hint" id="confirmHint">Lấy đúng túi thuộc các lô trên giao cho khách.</div>
           <div class="modal-actions">
-            <a href="#modal-bill" class="btn">🖨 In hóa đơn</a>
+            <button class="btn" id="btnShowBill">🖨 In hóa đơn</button>
             <a href="#ban-hang" class="btn btn-primary">+ Đơn mới</a>
           </div>
         </div>
       </div>
 
-      <!-- Hóa đơn in (145, 146, 147). Thông tin cửa hàng: system_settings invoice.* -->
+      <!-- Hóa đơn in (145, 146). Thông tin cửa hàng: system_settings invoice.*. JS điền -->
       <div id="modal-bill" class="modal">
         <div class="modal-box modal-bill">
           <div class="modal-head">
             <span>Xem trước hóa đơn</span>
             <a href="#ban-hang" class="icon-btn">✕</a>
           </div>
-          <div class="bill">
+          <div class="bill" id="bill">
             <div class="bill-center">
-              <div class="bill-store">NHÓM 4 COFFEE</div>
-              <div>12 Lê Lợi, Quận 1, TP.HCM</div>
-              <div>ĐT: 0283 999 1234</div>
+              <div class="bill-store" id="billStore"></div>
+              <div id="billAddress"></div>
+              <div id="billPhone"></div>
               <div class="bill-title">HÓA ĐƠN BÁN HÀNG</div>
-              <div>Số: HD261118-0002</div>
-              <div>18/11/2026 01:32 · Thu ngân: Quầy 01</div>
+              <div id="billNo"></div>
+              <div id="billMeta"></div>
             </div>
             <div class="bill-line"></div>
-            <div class="bill-item">
-              <div>Robusta Honey 250g nguyên hạt</div>
-              <div class="kv"><span>2 x 120.000</span><span>240.000</span></div>
-            </div>
-            <div class="bill-item">
-              <div>Culi Tây Nguyên 250g xay phin</div>
-              <div class="kv"><span>1 x 130.000</span><span>130.000</span></div>
-            </div>
+            <div id="billItems"></div>
             <div class="bill-line"></div>
-            <div class="kv kv-total"><span>TỔNG CỘNG</span><span>370.000đ</span></div>
-            <div class="kv"><span>Tiền mặt</span><span>500.000đ</span></div>
-            <div class="kv"><span>Tiền thối</span><span>130.000đ</span></div>
+            <div class="kv kv-total"><span>TỔNG CỘNG</span><span id="billTotal"></span></div>
+            <div id="billPayments"></div>
             <div class="bill-line"></div>
-            <div class="bill-center">Cảm ơn quý khách!<br />Quét mã QR trên túi để xem thông tin cà phê.</div>
+            <div class="bill-center" id="billFooter"></div>
           </div>
           <div class="modal-actions">
             <a href="#ban-hang" class="btn">Đóng</a>
-            <button class="btn btn-primary">🖨 In</button>
+            <button class="btn btn-primary" id="btnDoPrint">🖨 In</button>
           </div>
         </div>
       </div>
-    </div>
 
     <script src="../../assets/js/shared.js?v=20261119e"></script>
     <script src="../../assets/js/longdtta00178.js?v=20261119e"></script>
