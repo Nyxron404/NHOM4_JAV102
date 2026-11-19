@@ -122,7 +122,8 @@ public final class Mailer {
 
     /** Địa chỉ gốc của web để tạo liên kết trong email (mail.properties: app.base_url), null nếu chưa đặt. */
     static String baseUrl() {
-        String value = CONFIG.getProperty("app.base_url", "").strip();
+        String env = System.getenv("APP_BASE_URL");   // Railway: đặt biến môi trường này
+        String value = env != null && !env.isBlank() ? env.strip() : CONFIG.getProperty("app.base_url", "").strip();
         return value.isEmpty() ? null : value.replaceAll("/+$", "");
     }
 

@@ -147,14 +147,13 @@ public class AuthController extends BaseController {
 
     private static String baseUrl(HttpServletRequest request) {
         String configured = Mailer.baseUrl();
-        if (configured != null) {
-            return configured;   // ưu tiên địa chỉ cấu hình, tránh bị giả mạo header Host
+        boolean localRequest = request.getServerName().equals("localhost")
+                || request.getServerName().startsWith("127.");
+        // Ưu tiên địa chỉ cấu hình (tránh giả mạo Host), nhưng bỏ qua giá trị localhost khi đang chạy trên server thật
+        if (configured != null && (localRequest || !configured.contains("://localhost"))) {
+            return configured;
         }
-        int port = request.getServerPort();
-        boolean defaultPort = ("http".equals(request.getScheme()) && port == 80)
-                || ("https".equals(request.getScheme()) && port == 443);
-        return request.getScheme() + "://" + request.getServerName() + (defaultPort ? "" : ":" + port)
-                + request.getContextPath();
+        return controllers.longdtta00178.VnpayConfig.baseUrl(request);
     }
 
     /** IP người dùng cho login_histories (bỏ phần "%zone" của IPv6 vì kiểu INET không nhận). */

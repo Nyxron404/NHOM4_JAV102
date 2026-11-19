@@ -51,7 +51,18 @@ public final class VnpayConfig {
 
     /** http://localhost:8080/nhom4_website_ca_phe */
     public static String baseUrl(HttpServletRequest req) {
-        return req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+        String env = System.getenv("APP_BASE_URL");
+        if (env != null && !env.isBlank()) return env.strip().replaceAll("/+$", "");
+        // Sau proxy (Railway, Render...) Tomcat chỉ thấy http nội bộ -> đọc X-Forwarded-*
+        String proto = req.getHeader("X-Forwarded-Proto");
+        String scheme = proto != null && !proto.isBlank() ? proto.split(",")[0].trim() : req.getScheme();
+        String fwdHost = req.getHeader("X-Forwarded-Host");
+        String host = fwdHost != null && !fwdHost.isBlank() ? fwdHost.split(",")[0].trim() : req.getServerName();
+        int port = req.getServerPort();
+        boolean behindProxy = proto != null && !proto.isBlank();
+        boolean defaultPort = behindProxy || host.contains(":")
+                || ("http".equals(scheme) && port == 80) || ("https".equals(scheme) && port == 443);
+        return scheme + "://" + host + (defaultPort ? "" : ":" + port) + req.getContextPath();
     }
 
     public static String payUrl(HttpServletRequest req) {
@@ -144,4 +155,4 @@ public final class VnpayConfig {
         });
         return map;
     }
-}
+}

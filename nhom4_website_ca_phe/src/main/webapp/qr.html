@@ -55,7 +55,10 @@
 </div>
 
 <script>
-const APP = '/nhom4_website_ca_phe';
+// Tự lấy context path từ URL hiện tại (thư mục chứa qr.html):
+//   localhost:8080/nhom4_website_ca_phe/qr.html -> '/nhom4_website_ca_phe'
+//   xxx.up.railway.app/qr.html                  -> ''  (deploy ở ROOT)
+const APP = location.pathname.replace(/\/[^\/]*$/, '');
 
 const PRODUCTS = [
   {"product_id": 1, "product_name": "Cà phê Arabica Cầu Đất", "qr_token": "1e9901161ec4c4e8a6d6bbe3efbeabbb"},
@@ -66,7 +69,10 @@ const PRODUCTS = [
 ];
 
 const baseInput = document.getElementById('base');
-baseInput.value = localStorage.getItem('qrBase') || location.origin;
+// Địa chỉ đã lưu chỉ dùng khi đang ở localhost/IP LAN; lên server thật thì luôn dùng domain hiện tại
+var savedBase = localStorage.getItem('qrBase');
+var isLocal = /^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname);
+baseInput.value = (isLocal && savedBase) ? savedBase : location.origin;
 
 function saveBase(){
   localStorage.setItem('qrBase', baseInput.value.trim());
@@ -133,4 +139,4 @@ function downloadQR(){
 render();
 </script>
 </body>
-</html>
+</html>
