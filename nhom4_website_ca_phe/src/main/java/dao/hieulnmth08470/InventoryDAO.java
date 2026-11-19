@@ -125,7 +125,7 @@ public class InventoryDAO {
     public Map<String, Object> lotDetail(long lotId) throws SQLException {
         try (Connection connection = open()) {
             return one(connection, """
-                    SELECT s.lot_id, s.lot_code, s.package_id, p.sku, pr.product_name, v.variant_name, p.weight_g,
+                    SELECT s.lot_id, s.lot_code, l.qr_url, s.package_id, p.sku, pr.product_name, v.variant_name, p.weight_g,
                            s.roast_date, s.expiry_date, s.unit_cost,
                            s.expiry_date - CURRENT_DATE AS days_left,
                            pil.quantity AS imported_qty, s.quantity_on_hand,
