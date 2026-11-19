@@ -2,7 +2,7 @@ package models.longdtta00178;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-
+import models.enums.PaymentKind;
 import models.enums.PaymentStatus;
 
 /**
@@ -25,6 +25,8 @@ public class Payment {
     /** status | VARCHAR(10) | NOT NULL */
     private PaymentStatus status = PaymentStatus.PENDING;
     /** confirmed_by | INT | FK → users.user_id */
+        /** payment_kind | VARCHAR(10) | NOT NULL | CHARGE (thu) hoặc REFUND (hoàn) */
+    private PaymentKind paymentKind = PaymentKind.CHARGE;
     private Integer confirmedBy;
     /** created_at | TIMESTAMPTZ | NOT NULL */
     private OffsetDateTime createdAt;
@@ -49,6 +51,8 @@ public class Payment {
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getPaidAt() { return paidAt; }
     public void setPaidAt(OffsetDateTime paidAt) { this.paidAt = paidAt; }
+    public PaymentKind getPaymentKind() { return paymentKind; }
+    public void setPaymentKind(PaymentKind paymentKind) { this.paymentKind = paymentKind; }
 
     @Override
     public String toString() {
