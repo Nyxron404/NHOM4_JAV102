@@ -16,6 +16,6 @@ public class CatalogHomeServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.sendRedirect(req.getContextPath() + "/pages/hieulnmth08470.html");
+        resp.sendRedirect(req.getContextPath() + "/pages/hieulnmth08470/hieulnmth08470.html");
     }
 }

@@ -210,6 +210,8 @@ public abstract class BaseController extends HttpServlet {
         {"package_price_histories_package_id_effective_from_key",
             "Đã có mốc giá trùng thời điểm áp dụng"},
         {"variant_images_public_id_key", "Ảnh này đã được lưu"},
+        {"users_username_key", "Tên đăng nhập đã tồn tại"},
+        {"users_email_key", "Email đã được tài khoản khác sử dụng"},
         {"_fkey", "Dữ liệu liên quan không tồn tại hoặc đang được sử dụng"},
     };
 

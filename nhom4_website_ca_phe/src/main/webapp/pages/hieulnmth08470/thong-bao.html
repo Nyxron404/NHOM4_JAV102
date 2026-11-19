@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../assets/css/shared.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530-tai-khoan.css?v=20261119g">
+    <link rel="stylesheet" href="../../assets/css/hieulnmth08470-kho.css?v=20261119g">
+    <title>Thông báo - Quản lý bán hàng</title>
+</head>
+<body data-page="notifications">
+    <div id="header"></div>
+
+    <!-- Thông báo UC113, UC125–UC129 — Lê Nguyễn Minh Hiếu -->
+    <div class="staff-layout">
+        <aside class="staff-side">
+            <div class="side-title"><svg viewBox="0 0 24 24"><path d="M3 5h2v2H3V5Zm4 0h14v2H7V5ZM3 11h2v2H3v-2Zm4 0h14v2H7v-2Zm-4 6h2v2H3v-2Zm4 0h14v2H7v-2Z"/></svg> TÌM KIẾM</div>
+            <form id="notifyFilter">
+                <div class="acc-field"><label>Loại thông báo</label>
+                    <select name="type"><option value="">Tất cả</option><option value="EXPIRED">Lô hết hạn</option>
+                        <option value="NEAR_EXPIRY">Lô cận hạn</option><option value="LOW_STOCK">Tồn thấp</option></select></div>
+                <label class="acc-check"><input type="checkbox" name="unread" value="true"> Chỉ hiện chưa đọc</label>
+            </form>
+        </aside>
+
+        <main class="staff-main">
+            <div class="acc-title">
+                <h1><span class="title-icon"><svg viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.8V3a1.5 1.5 0 0 0-3 0v1.2A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg></span>
+                    Thông báo <span class="title-sub" id="unreadText"></span></h1>
+                <div class="title-actions">
+                    <button type="button" class="btn-big light" id="btnReadAll">
+                        <svg viewBox="0 0 24 24"><path d="m9 16.2-4.2-4.2-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2Z"/></svg> Đánh dấu tất cả đã đọc</button>
+                    <button type="button" class="btn-big primary" id="btnScan">
+                        <svg viewBox="0 0 24 24"><path d="M17.7 6.3A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.8-4.2L13 11h7V4l-2.3 2.3Z"/></svg> Quét ngay</button>
+                </div>
+            </div>
+            <div class="staff-table-wrap" id="tableBox"></div>
+        </main>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div id="toastRoot" class="toast-root"></div>
+    <script src="../../assets/js/shared.js?v=20261119g"></script>
+    <script src="../../assets/js/hieulnmth08470-kho.js?v=20261119g"></script>
+</body>
+</html>

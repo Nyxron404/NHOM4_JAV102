@@ -6,7 +6,7 @@
 (function () {
     "use strict";
 
-    const API = "../api";
+    const API = "../../api";
     const SCORE_FIELDS = [
         ["aromaScore", "Hương thơm"],
         ["acidityScore", "Độ chua"],

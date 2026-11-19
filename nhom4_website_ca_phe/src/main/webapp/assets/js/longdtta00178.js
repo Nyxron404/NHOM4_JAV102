@@ -3,7 +3,7 @@
    API: ../api/ban-hang/san-pham   (SalesProductController)
    ===================================================================== */
 
-const API_PRODUCTS = "../api/ban-hang/san-pham";
+const API_PRODUCTS = "../../api/ban-hang/san-pham";
 
 // Trạng thái bộ lọc hiện tại
 const filter = {
@@ -211,7 +211,7 @@ function bindFilters() {
    Mã đơn đang lập lưu ở localStorage để F5 trang không mất đơn.
    ===================================================================== */
 
-const API_ORDER = "../api/ban-hang/don";
+const API_ORDER = "../../api/ban-hang/don";
 const ORDER_KEY = "pos.currentInvoiceId";
 let currentOrder = null;          // {invoice:{...}, lines:[...]} hoặc null = chưa có đơn
 

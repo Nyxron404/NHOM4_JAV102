@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../assets/css/shared.css?v=20261119e">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530-tai-khoan.css?v=20261119e">
+    <title>Đăng nhập - VIETNAM COFFEE ROASTERY</title>
+</head>
+<body data-page="login" class="login-body">
+    <!-- Trang đăng nhập (UC1), quên mật khẩu (UC3), đặt lại mật khẩu (UC4) — Phạm Văn Minh -->
+
+    <!-- Ảnh nền tự chuyển (slideshow) -->
+    <div class="login-slides" id="loginSlides" aria-hidden="true"></div>
+
+    <a href="../../index.html" class="login-logo" title="VIETNAM COFFEE ROASTERY">
+        <img src="../../assets/img/logo.png" alt="VCR Roastery">
+    </a>
+
+    <main class="login-box">
+        <!-- UC1: Đăng nhập -->
+        <section id="viewLogin">
+            <h1>ĐĂNG NHẬP PHẦN MỀM</h1>
+            <a href="../../index.html" class="login-shop">VIETNAM COFFEE ROASTERY</a>
+            <form id="loginForm" novalidate>
+                <div class="auth-msg" id="loginMsg"></div>
+                <label class="icon-input">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5Z"/></svg>
+                    <input id="username" name="username" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="none" required>
+                </label>
+                <label class="icon-input">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 9V7A5 5 0 0 0 7 7v2H5v13h14V9h-2Zm-8-2a3 3 0 0 1 6 0v2H9V7Zm4 10.7V19h-2v-1.3a2 2 0 1 1 2 0Z"/></svg>
+                    <input id="password" name="password" type="password" placeholder="Mật khẩu" autocomplete="current-password" required>
+                </label>
+                <button type="submit" class="login-btn primary">ĐĂNG NHẬP</button>
+                <a href="#quen-mat-khau" class="login-link" data-view="forgot">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 12h3v8h6v-6h2v6h6v-8h3L12 3Z"/></svg> Quên mật khẩu?</a>
+            </form>
+        </section>
+
+        <!-- UC3: Quên mật khẩu -->
+        <section id="viewForgot" hidden>
+            <h1>QUÊN MẬT KHẨU?</h1>
+            <form id="forgotForm" novalidate>
+                <div class="auth-msg" id="forgotMsg"></div>
+                <label class="icon-input">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5Z"/></svg>
+                    <input id="email" name="email" type="email" placeholder="Địa chỉ Email" autocomplete="email" required>
+                </label>
+                <button type="submit" class="login-btn primary">RESET MẬT KHẨU</button>
+                <a href="#" class="login-link" data-view="login">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 12h3v8h6v-6h2v6h6v-8h3L12 3Z"/></svg> Quay lại Đăng nhập</a>
+            </form>
+        </section>
+
+        <!-- UC4: Đặt lại mật khẩu (mở từ liên kết trong email) -->
+        <section id="viewReset" hidden>
+            <h1>ĐẶT MẬT KHẨU MỚI</h1>
+            <p class="login-note" id="resetSub">Đang kiểm tra liên kết...</p>
+            <form id="resetForm" novalidate hidden>
+                <div class="auth-msg" id="resetMsg"></div>
+                <label class="icon-input">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 9V7A5 5 0 0 0 7 7v2H5v13h14V9h-2Zm-8-2a3 3 0 0 1 6 0v2H9V7Zm4 10.7V19h-2v-1.3a2 2 0 1 1 2 0Z"/></svg>
+                    <input id="newPassword" name="newPassword" type="password" placeholder="Mật khẩu mới" autocomplete="new-password" required>
+                </label>
+                <ul class="pw-rules" data-rules-for="newPassword">
+                    <li data-rule="length">Tối thiểu 8 ký tự</li>
+                    <li data-rule="mix">Có cả chữ và số</li>
+                </ul>
+                <label class="icon-input">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 9V7A5 5 0 0 0 7 7v2H5v13h14V9h-2Zm-8-2a3 3 0 0 1 6 0v2H9V7Zm4 10.7V19h-2v-1.3a2 2 0 1 1 2 0Z"/></svg>
+                    <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" required>
+                </label>
+                <button type="submit" class="login-btn primary">LƯU MẬT KHẨU MỚI</button>
+            </form>
+            <a href="dang-nhap.html" class="login-link">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 12h3v8h6v-6h2v6h6v-8h3L12 3Z"/></svg> Quay lại Đăng nhập</a>
+        </section>
+    </main>
+
+    <script src="../../assets/js/minhpvth08530-tai-khoan.js?v=20261119f"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../assets/css/shared.css?v=20261119e">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530.css?v=20261119e">
+    <link rel="stylesheet" href="../../assets/css/minhpvth08530-tai-khoan.css?v=20261119e">
+    <title>Thông tin tài khoản - Quản lý bán hàng</title>
+</head>
+<body data-page="profile">
+    <div id="header"></div>
+
+    <!-- Thông tin tài khoản: xem (UC6), cập nhật (UC7), đổi mật khẩu (UC5) — Phạm Văn Minh -->
+    <div class="acc-title"><h1>Thông tin tài khoản</h1></div>
+
+    <div class="acc-wrap">
+        <form class="acc-panel" id="profileForm" novalidate>
+            <div class="acc-error" id="profileError"></div>
+            <div class="acc-form">
+                <div class="acc-col">
+                    <div class="acc-field"><label>Tên đăng nhập</label>
+                        <input name="username" readonly></div>
+                    <div class="acc-field"><label>Mật khẩu hiện tại</label>
+                        <div class="eye-input"><input name="currentPassword" type="password" autocomplete="current-password"
+                            placeholder="Chỉ nhập khi muốn đổi mật khẩu"><button type="button" data-eye title="Hiện/ẩn mật khẩu"></button></div></div>
+                    <div class="acc-field"><label>Mật khẩu mới</label>
+                        <div class="eye-input"><input name="newPassword" type="password" autocomplete="new-password"
+                            placeholder="Để trống nếu không đổi"><button type="button" data-eye title="Hiện/ẩn mật khẩu"></button></div>
+                        <ul class="pw-rules" data-rules-for="newPassword">
+                            <li data-rule="length">Tối thiểu 8 ký tự</li>
+                            <li data-rule="mix">Có cả chữ và số</li>
+                        </ul></div>
+                    <div class="acc-field"><label>Nhập lại mật khẩu</label>
+                        <div class="eye-input"><input name="confirmPassword" type="password" autocomplete="new-password">
+                            <button type="button" data-eye title="Hiện/ẩn mật khẩu"></button></div></div>
+                </div>
+
+                <div class="acc-col">
+                    <div class="acc-field"><label>Tên</label>
+                        <input name="fullName" maxlength="200" required></div>
+                    <div class="acc-field"><label>Email</label>
+                        <input name="email" type="email" maxlength="255" placeholder="Email"></div>
+                    <div class="acc-field"><label>Điện thoại</label>
+                        <input name="phone" maxlength="15" placeholder="Điện thoại"></div>
+                    <div class="acc-field"><label>Vai trò</label>
+                        <input name="roleName" readonly>
+                        <div class="acc-perms" id="permList"></div></div>
+                    <label class="acc-check"><input type="checkbox" id="chkActive" disabled> Cho phép đăng nhập?</label>
+                    <label class="acc-check"><input type="checkbox" id="chkManager" disabled> Quyền admin/chủ cửa hàng?</label>
+                    <div class="acc-hint" id="loginInfo"></div>
+                </div>
+            </div>
+
+            <div class="acc-actions">
+                <a href="../../index.html" class="btn-big warn">
+                    <svg viewBox="0 0 24 24"><path d="M11 6v12l-8.5-6L11 6Zm9 0v12l-8.5-6L20 6Z"/></svg> Thoát</a>
+                <button type="submit" class="btn-big primary">
+                    <svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4Zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm3-10H5V5h10v4Z"/></svg> Lưu</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div id="toastRoot" class="toast-root"></div>
+    <script src="../../assets/js/shared.js?v=20261119e"></script>
+    <script src="../../assets/js/minhpvth08530-tai-khoan.js?v=20261119f"></script>
+</body>
+</html>
