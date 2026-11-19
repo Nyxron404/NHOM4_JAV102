@@ -28,7 +28,7 @@ public class StockCountDAO {
                     SELECT s.lot_id, s.lot_code, p.sku, s.expiry_date, s.quantity_on_hand
                     FROM v_lot_stock s
                     JOIN packages p ON p.package_id = s.package_id
-                    WHERE s.quantity_on_hand > 0
+                    WHERE s.quantity_on_hand <> 0
                       AND (CAST(? AS INT) IS NULL OR s.package_id = CAST(? AS INT))
                     ORDER BY p.sku, s.expiry_date
                     """, packageId, packageId);
@@ -47,12 +47,12 @@ public class StockCountDAO {
                 // Kiểm trước: CTE INSERT luôn chạy nên không kiểm thì sẽ sinh phiếu rỗng
                 Map<String, Object> any = one(c, """
                         SELECT 1 AS found FROM v_lot_stock s
-                        WHERE s.quantity_on_hand > 0
+                        WHERE s.quantity_on_hand <> 0
                           AND (CAST(? AS INT) IS NULL OR s.package_id = CAST(? AS INT))
                         LIMIT 1
                         """, packageId, packageId);
                 if (any == null) {
-                    throw new IllegalStateException("Không có lô nào còn tồn để kiểm kê");
+                    throw new IllegalStateException("Không có lô nào còn tồn (hoặc đang âm) để kiểm kê");
                 }
                 List<Map<String, Object>> rows = list(c, """
                         WITH c AS (
@@ -61,10 +61,10 @@ public class StockCountDAO {
                           RETURNING stock_count_id
                         )
                         INSERT INTO stock_count_lines (stock_count_id, lot_id, system_qty, counted_qty)
-                        SELECT c.stock_count_id, s.lot_id, s.quantity_on_hand, s.quantity_on_hand
+                        SELECT c.stock_count_id, s.lot_id, s.quantity_on_hand, GREATEST(s.quantity_on_hand, 0)
                         FROM c, v_lot_stock s
                         JOIN packages p ON p.package_id = s.package_id
-                        WHERE s.quantity_on_hand > 0
+                        WHERE s.quantity_on_hand <> 0
                           AND (CAST(? AS INT) IS NULL OR s.package_id = CAST(? AS INT))
                         RETURNING stock_count_id, count_line_id
                         """, userId, note, packageId, packageId);

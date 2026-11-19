@@ -31,6 +31,7 @@ import java.sql.Types;
 public class SalesOrderDAO {
 
     private static final ZoneId VIETNAM = ZoneId.of("Asia/Ho_Chi_Minh");
+        private final SalesLotDAO lotDao = new SalesLotDAO();
 
     /** Tồn bán được của 1 gói = tổng tồn các lô CÒN HẠN (câu 136) */
     private static final String SQL_SELLABLE_QTY = """
@@ -313,7 +314,9 @@ public class SalesOrderDAO {
        ========================================================= */
     public List<SalesLineAllocation> findAllocations(long invoiceId) throws SQLException {
         String sql = """
-                SELECT a.allocation_id, a.sales_line_id, a.lot_id, a.quantity,
+                                SELECT a.allocation_id, a.sales_line_id, a.lot_id, a.quantity, a.scanned_qty,
+                       (SELECT COALESCE(SUM(m.quantity_change), 0) FROM stock_movements m
+                        WHERE m.lot_id = a.lot_id) AS lot_stock,
                        v.variant_name, pk.weight_g, g.is_whole_bean,
                        lo.lot_code, lo.expiry_date,
                        lo.expiry_date <= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
@@ -345,6 +348,8 @@ public class SalesOrderDAO {
                     a.setLotCode(rs.getString("lot_code"));
                     a.setExpiryDate(rs.getObject("expiry_date", LocalDate.class));
                     a.setNearExpiry(rs.getBoolean("near_expiry"));
+                                        a.setScannedQty(rs.getInt("scanned_qty"));
+                    a.setLotStock(rs.getInt("lot_stock"));
                     list.add(a);
                 }
             }
@@ -429,60 +434,19 @@ public class SalesOrderDAO {
             }
         }
 
-        // 4. Trừ kho FEFO (142): mỗi dòng lấy dần từ lô còn hạn, hạn gần nhất trước
-        String sqlLots = """
-                SELECT lo.lot_id, SUM(m.quantity_change) AS qty
-                FROM lots lo
-                JOIN purchase_invoice_lines pil ON pil.purchase_line_id = lo.purchase_line_id
-                JOIN stock_movements m          ON m.lot_id = lo.lot_id
-                WHERE pil.package_id = ?
-                  AND lo.expiry_date >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
-                GROUP BY lo.lot_id, lo.expiry_date
-                HAVING SUM(m.quantity_change) > 0
-                ORDER BY lo.expiry_date, lo.lot_id
-                """;
-        String sqlAlloc = "INSERT INTO sales_line_allocations (sales_line_id, lot_id, quantity) VALUES (?, ?, ?)";
-        String sqlMove = """
-                INSERT INTO stock_movements (lot_id, movement_type, quantity_change, sales_invoice_id, performed_by)
-                VALUES (?, 'SALE', ?, ?, ?)
-                """;
-        for (long[] line : lines) {
-            long lineId = line[0];
-            int packageId = (int) line[1];
-            int need = (int) line[2];
-
-            try (PreparedStatement psLots = con.prepareStatement(sqlLots)) {
-                psLots.setInt(1, packageId);
-                try (ResultSet rs = psLots.executeQuery()) {
-                    while (rs.next() && need > 0) {
-                        long lotId = rs.getLong("lot_id");
-                        int take = Math.min(need, rs.getInt("qty"));
-                        try (PreparedStatement ps = con.prepareStatement(sqlAlloc)) {
-                            ps.setLong(1, lineId);
-                            ps.setLong(2, lotId);
-                            ps.setInt(3, take);
-                            ps.executeUpdate();
-                        }
-                        try (PreparedStatement ps = con.prepareStatement(sqlMove)) {
-                            ps.setLong(1, lotId);
-                            ps.setInt(2, -take);
-                            ps.setLong(3, invoiceId);
-                            ps.setObject(4, userId, Types.INTEGER);     // null = hệ thống
-                            ps.executeUpdate();
-                        }
-                        need -= take;
-                    }
-                }
-            }
-            if (need > 0) {
-                throw new IllegalArgumentException("Gói " + packageName(con, packageId)
-                        + " không đủ tồn (thiếu " + need + " túi). Giảm số lượng rồi xác nhận lại.");
-            }
-        }
+                // 4. Trừ kho đúng các lô đã chọn / đã quét (142, bán theo mã lô)
+        lotDao.deductLots(con, invoiceId, userId);
 
         // 5. Chuyển đơn sang đã xác nhận (140.1)
         try (PreparedStatement ps = con.prepareStatement(
-                "UPDATE sales_invoices SET status = 'PAID' WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
+                                "UPDATE sales_invoices SET status = 'PAID', confirmed_at = now() WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
+            ps.setLong(1, invoiceId);
+            ps.executeUpdate();
+        }
+        
+        // 6. QR VNPay còn chờ của đơn (khách đổi sang trả tiền mặt) -> hủy, tránh treo giao dịch
+        try (PreparedStatement ps = con.prepareStatement(
+                "UPDATE payments SET status = 'CANCELLED' WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
             ps.setLong(1, invoiceId);
             ps.executeUpdate();
         }
@@ -515,7 +479,8 @@ public class SalesOrderDAO {
                     throw new IllegalArgumentException("Đơn đã thu " + money(paid)
                             + ", không hủy ở quầy được. Báo chủ cửa hàng xử lý hoàn tiền.");
                 }
-
+                                // Bỏ các lô đã chọn (chưa trừ kho)
+                lotDao.releaseLots(con, invoiceId);
                 // 135.2 hủy QR VNPay còn chờ
                 try (PreparedStatement ps = con.prepareStatement(
                         "UPDATE payments SET status = 'CANCELLED' WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
@@ -588,6 +553,13 @@ public class SalesOrderDAO {
                  ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 result.put("pendingCount", rs.getInt(1));
+            }
+                        // VNPay đang bật? (trang cấu hình 163) -> màn bán hàng khóa nút QR khi tắt
+            try (PreparedStatement ps = con.prepareStatement(
+                    "SELECT COALESCE(bool_or(is_active), false) FROM payment_methods WHERE method_code = 'VNPAY'");
+                 ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                result.put("vnpayActive", rs.getBoolean(1));
             }
             // Thông tin in trên hóa đơn (C6)
             try (PreparedStatement ps = con.prepareStatement(

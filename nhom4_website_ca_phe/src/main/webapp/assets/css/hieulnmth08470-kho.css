@@ -80,3 +80,19 @@ table.staff tr.unread td { font-weight: bold; }
   .stock-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 16px 12px; }
   .expired-box, .count-head, .count-bar { margin-left: 16px; margin-right: 16px; }
 }
+
+/* Ảnh QR trong khung chi tiết lô */
+.lot-qr-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.lot-qr-box img {
+    width: 140px;
+    height: auto;
+    border: 1px solid #EAE2D6;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+}

@@ -476,57 +476,86 @@ select:focus {
 }
 
 .pkg {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 8px;
-    padding: 6px 4px;
-    border-radius: 6px;
+    column-gap: 10px;
+    row-gap: 2px;
+    padding: 10px 6px;
+    border-radius: 8px;
+}
+
+.pkg + .pkg {
+    border-top: 1px dashed #EAE2D6;
 }
 
 .pkg:hover {
     background-color: #FAF7F2;
 }
 
+/* Hàng 1: tên gói ........ giá */
 .pkg-name {
-    flex: 1;
-    min-width: 0;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: bold;
-}
-
-.pkg-sku {
-    font-size: 11px;
-    font-weight: normal;
-    color: #A89A8E;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .pkg-price {
-    width: 76px;
     text-align: right;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: bold;
     color: #8B5A2B;
+    white-space: nowrap;
+}
+
+/* Hàng 2: SKU ........ còn bao nhiêu */
+.pkg-sku {
+    font-size: 12px;
+    color: #A89A8E;
+    word-break: break-all;
 }
 
 .pkg-stock {
-    width: 84px;
-    white-space: nowrap;
     text-align: right;
-    font-size: 12px;
+    font-size: 13px;
     color: #5C4A3D;
+    white-space: nowrap;
+}
+
+/* Hàng 3: chọn lô + nút thêm */
+.pkg-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.lot-select {
+    flex: 1;
+    min-width: 0;
+    height: 34px;
+    padding: 0 8px;
+    border: 1px solid #EAE2D6;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    font-size: 13px;
+    color: #2C1E16;
+}
+
+.lot-none {
+    flex: 1;
+    font-size: 13px;
+    color: #B5A99E;
 }
 
 .pkg-add {
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
     border: none;
     border-radius: 50%;
     background-color: #D97706;
     color: #FFFFFF;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: bold;
     flex-shrink: 0;
 }
@@ -1159,4 +1188,221 @@ img.qr {
     border-radius: 8px;
     background-color: #FDECEA;
     font-size: 13px;
+}
+
+/* ===== ĐƠN CHỜ THANH TOÁN (mở lại đơn) ===== */
+.count-badge {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background-color: #D97706;
+    color: #FFFFFF;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+}
+
+#pendingList {
+    margin-top: 8px;
+}
+
+.pending-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #EAE2D6;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.pending-item:hover {
+    border-color: #D97706;
+    background-color: #FFFBF5;
+}
+
+.pending-current {
+    cursor: default;
+    background-color: #FEF3E2;
+}
+
+.pending-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ===== CẤU HÌNH BÁN HÀNG ===== */
+.config-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: start;
+}
+
+.config-layout .panel,
+#exceptionBox {
+    padding: 18px;
+}
+
+.config-layout .panel + .panel {
+    margin-top: 16px;
+}
+
+.method-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #EAE2D6;
+}
+
+.switch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.switch input {
+    width: 18px;
+    height: 18px;
+    accent-color: #D97706;
+}
+
+.order-msg.msg-ok {
+    background-color: #E7F5EC;
+    color: #1E7B3C;
+}
+
+.bill-preview {
+    max-width: 320px;
+    margin: 0 auto;
+    padding: 12px;
+    border: 1px dashed #EAE2D6;
+}
+
+@media (max-width: 900px) {
+    .config-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== BÁN THEO MÃ LÔ ===== */
+.pkg {
+    flex-wrap: wrap;
+}
+
+.pkg-lot {
+    flex-basis: 100%;
+}
+
+.lot-select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid #EAE2D6;
+    border-radius: 6px;
+    background-color: #FFFFFF;
+    font-size: 12px;
+    color: #2C1E16;
+}
+
+.scan-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+    padding: 6px 8px;
+    border: 1px dashed #D97706;
+    border-radius: 8px;
+    background-color: #FFFBF5;
+}
+
+.scan-bar input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    outline: none;
+}
+
+.line-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lot-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background-color: #FAF7F2;
+}
+
+.lot-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.lot-code {
+    font-size: 12px;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.order-msg.msg-warn {
+    background-color: #FEF3E2;
+    color: #B45F04;
+}
+
+.cam-video {
+    width: 100%;
+    max-height: 320px;
+    border-radius: 8px;
+    background-color: #2C1E16;
+}
+/* Tên gói (VD "250g · Nguyên hạt") luôn nằm 1 dòng */
+.pkg-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pkg-note {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background-color: #FEF3E2;
+    color: #B45F04;
+    font-size: 13px;
+}
+/* ===== SỬA ĐƠN ===== */
+#eLines {
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.lot-removed {
+    opacity: 0.5;
+}
+
+#eMode {
+    border: none;
+    background: transparent;
+    font-weight: bold;
+    color: #8B5A2B;
 }

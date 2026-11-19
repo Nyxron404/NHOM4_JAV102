@@ -139,20 +139,43 @@ function packageHtml(p) {
         stockText = "Sắp hết · " + p.sellableQty;
     }
 
-    const nearTag = p.nearExpiry && p.canSell
-        ? ' <span class="tag-near" title="Có lô sắp hết hạn, hệ thống sẽ trừ lô này trước">Lô cận hạn</span>'
-        : "";
+    // Ô chọn lô: lô còn hạn, còn hàng, hạn gần nhất đứng đầu (chọn sẵn); tìm theo mã lô thì chọn sẵn lô đó
+    const lots = p.lots || [];
+        // Lô đang tìm không bán được (hết hàng / hết hạn): không chọn sẵn lô khác, bắt người bán tự chọn
+    const selected = p.matchedLotNote ? null : (p.matchedLotId || (lots[0] && lots[0].lotId));
+    const lotBox = lots.length === 0
+        ? '<span class="lot-none">Không có lô bán được</span>'
+        : `<select class="lot-select" title="Chọn đúng lô của túi giao cho khách">
+                     ${p.matchedLotNote ? '<option value="" selected disabled>— Chọn lô khác —</option>' : ""}
+             ${lots.map(l => `<option value="${l.lotId}" title="${esc(l.lotCode)}" ${l.lotId === selected ? "selected" : ""}>
+               Lô ${esc(shortLot(l.lotCode, p.sku))} · HSD ${dateShort(l.expiryDate)} · còn ${l.qty}${l.nearExpiry ? " · cận hạn" : ""}
+             </option>`).join("")}
+           </select>`;
 
     return `
           <div class="${rowClass}">
-            <div class="pkg-name">${weightText(p.weightG)} · ${form}${nearTag}
-              <div class="pkg-sku" title="${esc(p.grindName)}">${esc(p.sku)}</div>
-            </div>
+            <div class="pkg-name">${weightText(p.weightG)} · ${form}</div>
             <div class="pkg-price">${p.salePrice === null ? "—" : money(p.salePrice)}</div>
+            <div class="pkg-sku" title="${esc(p.grindName)}">${esc(p.sku)}</div>
             <div class="pkg-stock">${stockText}</div>
-            <button class="pkg-add" title="Thêm vào đơn" data-package-id="${p.packageId}"
-                    ${p.canSell ? "" : "disabled"}>+</button>
+                        ${p.matchedLotNote ? `<div class="pkg-note">⚠ ${esc(p.matchedLotNote)}</div>` : ""}
+            <div class="pkg-actions">
+              ${lotBox}
+              <button class="pkg-add" title="Thêm 1 túi của lô đang chọn"
+                      ${p.canSell && lots.length ? "" : "disabled"}>+</button>
+            </div>
           </div>`;
+}
+
+// Mã lô = "L" + ngày rang + "-" + SKU -> bỏ phần SKU (đã hiện ở trên) cho gọn: L261108-CD-MOKA-WS-250-WB -> L261108
+function shortLot(lotCode, sku) {
+    return lotCode.endsWith("-" + sku) ? lotCode.slice(0, -(sku.length + 1)) : lotCode;
+}
+
+// "2027-11-08" -> 08/11/27
+function dateShort(iso) {
+    const [y, m, d] = String(iso).split("-");
+    return d + "/" + m + "/" + y.slice(2);
 }
 
 /* ---------- Sự kiện bộ lọc ---------- */
@@ -199,9 +222,14 @@ function bindFilters() {
 
         // Nút + : thêm gói vào đơn (UC 130 + 132)
     document.getElementById("productGrid").addEventListener("click", e => {
-        const button = e.target.closest(".pkg-add");
+                const button = e.target.closest(".pkg-add");
         if (!button || button.disabled) return;
-        addToOrder(button.dataset.packageId);
+                const select = button.closest(".pkg").querySelector(".lot-select");
+        if (!select || !select.value) {
+            showOrderMessage("Chọn lô trước khi bấm +");
+            return;
+        }
+        addToOrder({ lotId: Number(select.value) });
     });
 }
 
@@ -258,29 +286,52 @@ async function loadCurrentOrder() {
 }
 
 // Bấm + ở gói: chưa có đơn thì tạo đơn trước (130), rồi thêm gói (132)
-async function addToOrder(packageId) {
+/* Các thao tác sửa đơn chạy lần lượt (xếp hàng).
+   Bấm + nhanh nhiều lần: lần sau đợi lần trước xong -> chỉ tạo 1 đơn, số lượng cộng dồn đúng. */
+let orderQueue = Promise.resolve();
+
+function runInOrder(task) {
+    const run = orderQueue.then(task, task);
+    orderQueue = run.catch(() => {});
+    return run;
+}
+
+/* Thêm 1 túi theo lô (bán theo mã lô):
+   {lotId}                     chọn ở ô thả xuống
+   {lotCode, scanned: true}    quét QR (máy quét / camera) -> được bán vượt tồn, chủ duyệt sau
+   {lotCode, scanned: false}   gõ tay mã lô -> không được vượt tồn */
+function addToOrder(lot) {
+    return runInOrder(() => addToOrderNow(lot));
+}
+
+async function addToOrderNow(lot) {
     try {
         if (!currentOrder) {
             saveOrder(await postOrder({ action: "create" }));
         }
-        saveOrder(await postOrder({
-            action: "addPackage",
-            invoiceId: currentOrder.invoice.salesInvoiceId,
-            packageId: packageId,
-            quantity: 1
-        }));
-        showOrderMessage("");
+        const data = { action: "addLot", invoiceId: currentOrder.invoice.salesInvoiceId };
+        if (lot.lotId) data.lotId = lot.lotId;
+        if (lot.lotCode) data.lotCode = lot.lotCode;
+        data.scanned = lot.scanned === true;
+        const order = await postOrder(data);
+        saveOrder(order);
+        showOrderMessage(order.warning || "", !!order.warning);
     } catch (error) {
         showOrderMessage(error.message);
     }
 }
 
-async function changeQuantity(lineId, quantity) {
+function changeLotQty(lineId, lotId, quantity) {
+    return runInOrder(() => changeLotQtyNow(lineId, lotId, quantity));
+}
+
+async function changeLotQtyNow(lineId, lotId, quantity) {
     try {
         saveOrder(await postOrder({
-            action: "updateQty",
+            action: "updateLotQty",
             invoiceId: currentOrder.invoice.salesInvoiceId,
             lineId: lineId,
+            lotId: lotId,
             quantity: quantity
         }));
         showOrderMessage("");
@@ -290,7 +341,11 @@ async function changeQuantity(lineId, quantity) {
     }
 }
 
-async function removeLine(lineId) {
+function removeLine(lineId) {
+    return runInOrder(() => removeLineNow(lineId));
+}
+
+async function removeLineNow(lineId) {
     try {
         saveOrder(await postOrder({
             action: "removeLine",
@@ -304,10 +359,12 @@ async function removeLine(lineId) {
 }
 
 /* ---------- Vẽ đơn ---------- */
-function showOrderMessage(text) {
+// warn = true: cảnh báo màu cam (VD quét lô vượt tồn), mặc định: lỗi màu đỏ
+function showOrderMessage(text, warn) {
     const box = document.getElementById("orderMsg");
     box.textContent = text;
     box.style.display = text ? "block" : "none";
+    box.classList.toggle("msg-warn", !!warn);
 }
 
 function dateTimeText(iso) {
@@ -321,7 +378,7 @@ function renderOrder() {
 
     if (!currentOrder) {
         document.getElementById("orderNo").textContent = "Đơn mới";
-        document.getElementById("orderMeta").textContent = "Bấm + ở gói cà phê để bắt đầu";
+        document.getElementById("orderMeta").textContent = "Quét mã lô hoặc bấm + ở gói để bắt đầu";
         document.getElementById("orderStatus").innerHTML = "";
         linesBox.innerHTML = '<div class="order-empty">Chưa có gói nào trong đơn</div>';
         setSummary(0, 0, 0, 0, 0);
@@ -348,26 +405,43 @@ function renderOrder() {
 
 function lineHtml(l) {
     const form = l.wholeBean ? "Nguyên hạt" : "Xay sẵn";
-    const overStock = l.quantity > l.maxQty;       // tồn giảm sau khi thêm vào đơn
+    const allocations = (currentOrder.allocations || []).filter(a => a.salesLineId === l.salesLineId);
+    const allocated = allocations.reduce((sum, a) => sum + a.quantity, 0);
+
+    const lotRows = allocations.map(a => {
+        const over = a.quantity - Math.max(a.lotStock, 0);          // số túi vượt tồn hệ thống
+        return `
+        <div class="lot-row">
+          <div class="lot-info">
+            <span class="lot-code">${esc(a.lotCode)}</span>
+            <span class="sub">HSD ${dateShort(a.expiryDate)}${a.scannedQty ? " · 📷 quét " + a.scannedQty : ""}</span>
+            ${over > 0 ? `<span class="sub text-warn">Vượt tồn ${over} túi → bán âm, chủ duyệt sau</span>` : ""}
+          </div>
+          <div class="qty">
+            <button data-action="lot-minus" data-line-id="${l.salesLineId}" data-lot-id="${a.lotId}">−</button>
+            <input class="qty-input lot-qty-input" type="number" min="0" value="${a.quantity}"
+                   data-line-id="${l.salesLineId}" data-lot-id="${a.lotId}" />
+            <button data-action="lot-plus" data-line-id="${l.salesLineId}" data-lot-id="${a.lotId}">+</button>
+          </div>
+        </div>`;
+    }).join("");
+
     return `
       <div class="line">
         <div class="line-top">
           <div>
             <div class="line-name">${esc(l.variantName)}</div>
-            <div class="sub">${weightText(l.weightG)} · ${form} · ${money(l.unitPrice)}</div>
+            <div class="sub">${weightText(l.weightG)} · ${form} · ${money(l.unitPrice)} · ${l.quantity} túi</div>
           </div>
-          <button class="icon-btn" title="Bỏ khỏi đơn" data-action="remove" data-line-id="${l.salesLineId}">✕</button>
-        </div>
-        <div class="line-bottom">
-          <div class="qty">
-            <button data-action="minus" data-line-id="${l.salesLineId}" ${l.quantity <= 1 ? "disabled" : ""}>−</button>
-            <input class="qty-input" type="number" min="1" max="${l.maxQty}" value="${l.quantity}"
-                   data-line-id="${l.salesLineId}" />
-            <button data-action="plus" data-line-id="${l.salesLineId}" ${l.quantity >= l.maxQty ? "disabled" : ""}>+</button>
+          <div class="line-right">
+            <span class="line-amount">${money(l.lineAmount)}</span>
+            <button class="icon-btn" title="Bỏ khỏi đơn" data-action="remove" data-line-id="${l.salesLineId}">✕</button>
           </div>
-          <span class="sub ${overStock ? "text-warn" : ""}">tối đa ${l.maxQty}</span>
-          <span class="line-amount">${money(l.lineAmount)}</span>
         </div>
+        ${lotRows}
+        ${allocated < l.quantity
+            ? '<div class="sub text-warn">Gói này chưa chọn lô (đơn tạo trước khi bán theo lô). Bỏ gói rồi thêm lại theo lô.</div>'
+            : ""}
       </div>`;
 }
 
@@ -382,31 +456,36 @@ function setSummary(qty, packageCount, total, paid, due) {
 function bindOrderEvents() {
     const linesBox = document.getElementById("orderLines");
 
-    // Nút −, +, ✕
+    // Nút −, + của từng lô; ✕ bỏ cả gói
     linesBox.addEventListener("click", e => {
         const button = e.target.closest("button[data-action]");
         if (!button || button.disabled || !currentOrder) return;
         const lineId = Number(button.dataset.lineId);
-        const line = currentOrder.lines.find(l => l.salesLineId === lineId);
-        if (!line) return;
 
-        if (button.dataset.action === "minus") changeQuantity(lineId, line.quantity - 1);
-        if (button.dataset.action === "plus") changeQuantity(lineId, line.quantity + 1);
-        if (button.dataset.action === "remove") removeLine(lineId);
+        if (button.dataset.action === "remove") {
+            removeLine(lineId);
+            return;
+        }
+        const lotId = Number(button.dataset.lotId);
+        const a = currentOrder.allocations.find(x => x.salesLineId === lineId && x.lotId === lotId);
+        if (!a) return;
+        if (button.dataset.action === "lot-minus") changeLotQty(lineId, lotId, a.quantity - 1);
+        if (button.dataset.action === "lot-plus") changeLotQty(lineId, lotId, a.quantity + 1);
     });
 
-    // Gõ số lượng trực tiếp rồi Enter / rời ô
+    // Gõ số túi của lô rồi Enter / rời ô (0 = bỏ lô đó)
     linesBox.addEventListener("change", e => {
-        if (!e.target.classList.contains("qty-input")) return;
+        if (!e.target.classList.contains("lot-qty-input")) return;
         const quantity = parseInt(e.target.value, 10);
-        if (!quantity || quantity < 1) { renderOrder(); return; }
-        changeQuantity(Number(e.target.dataset.lineId), quantity);
+        if (isNaN(quantity) || quantity < 0) { renderOrder(); return; }
+        changeLotQty(Number(e.target.dataset.lineId), Number(e.target.dataset.lotId), quantity);
     });
 
     // Đơn mới: để đơn hiện tại ở trạng thái chờ (xem lại ở tab Hóa đơn), bắt đầu đơn trống
     document.getElementById("btnNewOrder").addEventListener("click", () => {
         saveOrder(null);
         showOrderMessage("");
+        loadOverview();                  // cập nhật số đơn chờ
     });
 }
 
@@ -450,7 +529,9 @@ async function loadOverview() {
         document.getElementById("statConfirmed").textContent = data.confirmedToday;
         document.getElementById("statToday").textContent = "Hôm nay " + new Date().toLocaleDateString("vi-VN");
         document.getElementById("statPending").textContent = data.pendingCount;
+                document.getElementById("pendingBadge").textContent = data.pendingCount;
         storeInfo = data;
+        updatePayUI();
     } catch (error) {
         console.error("Không tải được chỉ số:", error);
     }
@@ -482,7 +563,9 @@ function updatePayUI() {
     changeBox.parentElement.classList.toggle("kv-short", given > 0 && change < 0);
 
     document.getElementById("btnCancelOrder").disabled = !currentOrder;
-    document.getElementById("btnVnpay").disabled = !hasLines || due <= 0;
+        const vnpayOff = storeInfo.vnpayActive === false;
+    document.getElementById("btnVnpay").disabled = !hasLines || due <= 0 || vnpayOff;
+    document.getElementById("btnVnpay").title = vnpayOff ? "VNPay đang tắt (trang Cấu hình)" : "";
     document.getElementById("btnConfirm").disabled = !hasLines || (due > 0 && given < due);
 }
 
@@ -592,7 +675,10 @@ function showBill() {
 
     document.getElementById("billStore").textContent = (storeInfo.storeName || "").toUpperCase();
     document.getElementById("billAddress").textContent = storeInfo.address || "";
-    document.getElementById("billPhone").textContent = storeInfo.phone ? "ĐT: " + storeInfo.phone : "";
+        document.getElementById("billPhone").textContent = [
+        storeInfo.phone ? "ĐT: " + storeInfo.phone : "",
+        storeInfo.taxCode ? "MST: " + storeInfo.taxCode : ""
+    ].filter(Boolean).join(" · ");
     document.getElementById("billNo").textContent = "Số: " + inv.invoiceNo;
     document.getElementById("billMeta").textContent =
         dateTimeText(new Date().toISOString()) + " · Thu ngân: " + (inv.cashierName || "");
@@ -766,14 +852,261 @@ function bindVnpayEvents() {
     });
 }
 
+/* =====================================================================
+   MỞ LẠI ĐƠN CHỜ THANH TOÁN
+   Đơn để chờ (bấm "+ Đơn mới") vẫn nằm ở DB với trạng thái PENDING.
+   Mở lại -> đơn thành đơn đang lập: thêm/bớt gói, thu tiền mặt / VNPay, xác nhận, hủy như bình thường.
+   Danh sách lấy từ API trang hóa đơn: ../../api/hoa-don?action=list&status=PENDING
+   ===================================================================== */
+
+const API_PENDING = "../../api/hoa-don";
+let pendingPage = 1;
+
+async function openPendingList() {
+    pendingPage = 1;
+    document.getElementById("pendingSearch").value = "";
+    location.hash = "#modal-don-cho";
+    await loadPendingList(false);
+    document.getElementById("pendingSearch").focus();
+}
+
+// append = true: bấm "Xem thêm" (nối thêm trang sau)
+async function loadPendingList(append) {
+    const params = new URLSearchParams({
+        action: "list",
+        status: "PENDING",
+        keyword: document.getElementById("pendingSearch").value.trim(),
+        page: pendingPage
+    });
+    const list = document.getElementById("pendingList");
+    let data;
+    try {
+        data = await getJson(API_PENDING + "?" + params);
+    } catch (error) {
+        document.getElementById("pendingInfo").textContent = "Lỗi: " + error.message;
+        return;
+    }
+
+    const currentId = currentOrder ? currentOrder.invoice.salesInvoiceId : null;
+    const html = data.rows.map(r => `
+        <div class="pending-item ${r.salesInvoiceId === currentId ? "pending-current" : ""}" data-id="${r.salesInvoiceId}">
+          <div>
+            <b>${esc(r.invoiceNo)}</b>
+            <div class="sub">${dateTimeText(r.createdAt)} · ${esc(r.cashierName)}</div>
+          </div>
+          <div class="pending-right">
+            <b>${money(r.totalAmount)}</b>
+            ${r.salesInvoiceId === currentId
+                ? '<span class="sub">Đang mở</span>'
+                : '<button class="btn btn-sm btn-primary">Mở đơn</button>'}
+          </div>
+        </div>`).join("");
+    list.innerHTML = append ? list.innerHTML + html : html;
+
+    if (!append && data.rows.length === 0) {
+        list.innerHTML = '<div class="order-empty">Không có đơn chờ thanh toán.</div>';
+    }
+    document.getElementById("pendingInfo").textContent = data.total + " đơn đang chờ · mới nhất trước";
+    if (!document.getElementById("pendingSearch").value.trim()) {
+        document.getElementById("pendingBadge").textContent = data.total;
+    }
+    document.getElementById("btnPendingMore").style.display =
+        pendingPage * data.pageSize < data.total ? "" : "none";
+}
+
+// Mở 1 đơn chờ thành đơn đang lập
+async function openPendingOrder(id) {
+    try {
+        const order = await getJson(API_ORDER + "?id=" + id);
+        if (order.invoice.status !== "PENDING") {
+            alert("Đơn " + order.invoice.invoiceNo + " đã được xác nhận hoặc hủy ở máy khác.");
+            loadPendingList(false);
+            return;
+        }
+        stopVnpayPolling();                                   // QR của đơn cũ (nếu đang mở) ngừng theo dõi
+        document.getElementById("cashGiven").value = "";
+        saveOrder(order);
+        showOrderMessage("");
+        location.hash = "#ban-hang";
+    } catch (error) {
+        alert("Không mở được đơn: " + error.message);
+    }
+}
+
+function bindPendingEvents() {
+    document.getElementById("btnPendingList").addEventListener("click", openPendingList);
+
+    document.getElementById("pendingList").addEventListener("click", e => {
+        const item = e.target.closest(".pending-item");
+        if (item && !item.classList.contains("pending-current")) openPendingOrder(Number(item.dataset.id));
+    });
+
+    // Gõ tìm: đợi 300ms sau phím cuối mới gọi API
+    let timer = null;
+    document.getElementById("pendingSearch").addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { pendingPage = 1; loadPendingList(false); }, 300);
+    });
+
+    document.getElementById("btnPendingMore").addEventListener("click", () => {
+        pendingPage++;
+        loadPendingList(true);
+    });
+}
+
+/* =====================================================================
+   QUÉT MÃ LÔ: máy quét USB / camera
+   Máy quét USB gõ cả mã rất nhanh rồi tự nhấn Enter -> đo tốc độ gõ để biết là quét hay gõ tay.
+   Camera đọc QR rồi đưa mã vào đúng hàm xử lý như máy quét (scanned = true).
+   Quét = có túi thật -> được bán vượt tồn (chủ duyệt sau). Gõ tay = không được vượt tồn.
+   ===================================================================== */
+
+const SCAN_MAX_MS_PER_CHAR = 35;      // máy quét: < 35ms / ký tự; người gõ thường > 80ms
+let scanKeyTimes = [];
+
+function handleLotCode(code, scanned) {
+    code = (code || "").trim();
+    if (!code) return;
+    addToOrder({ lotCode: code, scanned: scanned });
+}
+
+function bindScanEvents() {
+    const input = document.getElementById("scanInput");
+
+    input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const times = scanKeyTimes;
+            const avg = times.length > 1 ? (times[times.length - 1] - times[0]) / (times.length - 1) : 999;
+            const scanned = input.value.trim().length >= 4 && avg < SCAN_MAX_MS_PER_CHAR;
+            handleLotCode(input.value, scanned);
+            input.value = "";
+            scanKeyTimes = [];
+            return;
+        }
+        if (e.key.length === 1) scanKeyTimes.push(performance.now());
+    });
+    input.addEventListener("input", () => {
+        if (!input.value) scanKeyTimes = [];
+    });
+
+    // Máy quét gõ khi chưa bấm vào ô nào -> chuyển vào ô quét
+    document.addEventListener("keydown", e => {
+        if (e.key.length !== 1 || e.ctrlKey || e.altKey || e.metaKey) return;
+        if (e.target.closest("input, select, textarea") || location.hash.startsWith("#modal")) return;
+        input.focus();
+        scanKeyTimes.push(performance.now());
+    });
+
+    document.getElementById("btnCamera").addEventListener("click", openCamera);
+    window.addEventListener("hashchange", () => {
+        if (location.hash !== "#modal-camera") stopCamera();
+    });
+}
+
+/* ---------- Camera ---------- */
+let camStream = null;
+let camTimer = null;
+let camDetector = null;          // BarcodeDetector (Chrome / Edge hỗ trợ sẵn) hoặc null -> dùng jsQR
+
+const JSQR_URL = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+
+function setCamStatus(text, error) {
+    const box = document.getElementById("camStatus");
+    box.textContent = text;
+    box.classList.toggle("wait-fail", !!error);
+}
+
+async function openCamera() {
+    location.hash = "#modal-camera";
+    if (!window.isSecureContext || !navigator.mediaDevices) {
+        setCamStatus("Trình duyệt chỉ cho mở camera trên localhost hoặc https.", true);
+        return;
+    }
+    setCamStatus("Đang mở camera…");
+    try {
+        if ("BarcodeDetector" in window) {
+            const formats = await BarcodeDetector.getSupportedFormats();
+            camDetector = formats.includes("qr_code")
+                ? new BarcodeDetector({ formats: formats.filter(f => ["qr_code", "code_128"].includes(f)) })
+                : null;
+        }
+        if (!camDetector && !window.jsQR) await loadScript(JSQR_URL);
+
+        camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        const video = document.getElementById("camVideo");
+        video.srcObject = camStream;
+        await video.play();
+        setCamStatus("Đưa mã QR trên nhãn lô vào khung hình");
+        camTimer = setInterval(scanFrame, 250);
+    } catch (error) {
+        setCamStatus("Không mở được camera: " + error.message, true);
+        stopCamera();
+    }
+}
+
+async function scanFrame() {
+    const video = document.getElementById("camVideo");
+    if (!camStream || video.readyState < 2) return;
+    let code = null;
+    try {
+        if (camDetector) {
+            const found = await camDetector.detect(video);
+            if (found.length) code = found[0].rawValue;
+        } else if (window.jsQR) {
+            const canvas = document.getElementById("camCanvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const found = window.jsQR(image.data, image.width, image.height);
+            if (found) code = found.data;
+        }
+    } catch (error) {
+        return;                                   // khung hình lỗi: bỏ qua, đọc khung sau
+    }
+    if (code) {
+        stopCamera();
+        location.hash = "#ban-hang";
+        handleLotCode(code, true);                // giống máy quét
+    }
+}
+
+function stopCamera() {
+    clearInterval(camTimer);
+    camTimer = null;
+    if (camStream) camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
+}
+
+function loadScript(url) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = url;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("không tải được thư viện đọc QR (cần mạng)"));
+        document.head.appendChild(s);
+    });
+}
+
 /* ---------- Khởi động ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
     bindFilters();
     bindOrderEvents();
     bindPayEvents();
-    loadCurrentOrder();
+        // Đến từ trang cấu hình (?open=id): mở đơn chờ đó
+    const openId = new URLSearchParams(location.search).get("open");
+    loadCurrentOrder().then(() => {
+        if (openId) {
+            history.replaceState(null, "", location.pathname);
+            openPendingOrder(Number(openId));
+        }
+    });
     loadOverview();
     bindVnpayEvents();
+        bindPendingEvents();
+            bindScanEvents();
     try {
         await loadFilterOptions();
     } catch (error) {

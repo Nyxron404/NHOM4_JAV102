@@ -375,6 +375,16 @@
         };
 
         // ---------- UC108, UC109, UC110: lô hàng
+        // Ảnh QR của lô: dùng ảnh Cloudinary nếu có, chưa có thì lấy ảnh tạo trực tiếp từ /api/lot-qr
+        function qrBlock(d) {
+            const src = d.qrUrl || `../../api/lot-qr?lotId=${d.lotId}`;
+            return `<div class="lot-qr-box">
+                <img src="${esc(src)}" alt="QR ${esc(d.lotCode)}">
+                <div><b>Mã QR lô</b><br><span class="acc-hint">Nội dung: ${esc(d.lotCode)}<br>
+                ${d.qrUrl ? "Đã lưu trên Cloudinary" : "Chưa lưu trên Cloudinary"}</span></div>
+              </div>`;
+        }
+
         async function loadLots() {
             const data = await api("kho", { params: { view: "lots", ...formData(filters.lots) } });
             state.canManage = data.canManage;
@@ -402,8 +412,11 @@
                         ["Số lượng nhập", num(detail.importedQty)], ["Tồn hiện tại", `<b>${num(detail.quantityOnHand)}</b>`],
                         ["Giá nhập / gói", money(detail.unitCost)], ["Giá trị tồn", money(detail.unitCost * detail.quantityOnHand)],
                         ["Hóa đơn nhập", `${esc(detail.invoiceNo)} · ${day(detail.invoiceDate)}`], ["Nhà cung cấp", esc(detail.supplierName || "")],
-                    ]), button("history", "light", ICON.history, "Lịch sử biến động")
-                        + button("adjust", "primary", ICON.edit, "Điều chỉnh tồn"))}</td></tr>` : ""}`;
+                    ]) + qrBlock(detail), button("history", "light", ICON.history, "Lịch sử biến động")
+                        + button("adjust", "primary", ICON.edit, "Điều chỉnh tồn")
+                        + button("qr-download", "light", ICON.box, "Tải ảnh QR")
+                        + button("qr-print", "light", ICON.box, "In tem QR")
+                        + (state.canManage && !detail.qrUrl ? button("qr-create", "light", ICON.check, "Tạo QR còn thiếu") : ""))}</td></tr>` : ""}`;
             }).join("");
             box.innerHTML = table(head, rows, "Không có lô nào còn tồn phù hợp.");
             bindRows(() => loadLots());
@@ -413,6 +426,18 @@
                         filters.movements.packageId.value = ""; filters.movements.lotId.value = detail.lotId; setTab("movements");
                     }
                     if (btn.dataset.act === "adjust") adjustLot(detail);
+                    if (btn.dataset.act === "qr-download") {
+                        location.href = `../../api/lot-qr?lotId=${detail.lotId}&download=1`;
+                    }
+                    if (btn.dataset.act === "qr-print") {
+                        const w = window.open(`../../api/lot-qr?lotId=${detail.lotId}`, "_blank");
+                        if (w) w.onload = () => w.print();
+                    }
+                    if (btn.dataset.act === "qr-create") {
+                        api("lot-qr", { form: { action: "generateMissing" } })
+                            .then((r) => { toast(r.cloud ? `Đã tạo QR cho ${r.created} lô` : "Chưa cấu hình CLOUDINARY_URL", r.cloud ? "ok" : "error"); loadLots(); })
+                            .catch((err) => toast(err.message, "error"));
+                    }
                 };
             });
         }

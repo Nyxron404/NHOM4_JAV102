@@ -32,11 +32,11 @@ public class InventoryDAO {
     private static final String PACKAGE_STOCK = """
             SELECT p.package_id, p.sku, pr.product_name, v.variant_name, p.weight_g, g.grind_name,
                    s.quantity_on_hand, p.min_stock_level,
-                   CASE WHEN s.quantity_on_hand = 0 THEN 'OUT_OF_STOCK'
+                   CASE WHEN s.quantity_on_hand <= 0 THEN 'OUT_OF_STOCK'
                         WHEN s.is_low_stock THEN 'LOW_STOCK'
                         ELSE 'IN_STOCK' END AS stock_status,
                    (SELECT COUNT(*) FROM v_lot_stock ls
-                     WHERE ls.package_id = p.package_id AND ls.quantity_on_hand > 0) AS lot_count
+                     WHERE ls.package_id = p.package_id AND ls.quantity_on_hand <> 0) AS lot_count
             FROM v_package_stock s
             JOIN packages p ON p.package_id = s.package_id
             JOIN product_variants v ON v.variant_id = p.variant_id
@@ -109,7 +109,7 @@ public class InventoryDAO {
                       JOIN packages p ON p.package_id = s.package_id
                       CROSS JOIN (SELECT setting_value FROM system_settings
                                   WHERE setting_key = 'inventory.near_expiry_days') st
-                      WHERE s.quantity_on_hand > 0
+                      WHERE s.quantity_on_hand <> 0
                     ) t
                     WHERE (CAST(? AS TEXT) IS NULL OR t.expiry_status = ?)
                       AND (CAST(? AS DATE) IS NULL OR t.expiry_date >= CAST(? AS DATE))
@@ -125,7 +125,7 @@ public class InventoryDAO {
     public Map<String, Object> lotDetail(long lotId) throws SQLException {
         try (Connection connection = open()) {
             return one(connection, """
-                    SELECT s.lot_id, s.lot_code, s.package_id, p.sku, pr.product_name, v.variant_name, p.weight_g,
+                    SELECT s.lot_id, s.lot_code, l.qr_url, s.package_id, p.sku, pr.product_name, v.variant_name, p.weight_g,
                            s.roast_date, s.expiry_date, s.unit_cost,
                            s.expiry_date - CURRENT_DATE AS days_left,
                            pil.quantity AS imported_qty, s.quantity_on_hand,

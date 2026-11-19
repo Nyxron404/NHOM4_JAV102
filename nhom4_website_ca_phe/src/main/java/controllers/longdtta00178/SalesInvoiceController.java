@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-
+import dao.longdtta00178.SalesEditDAO;
+import java.util.ArrayList;
 import controllers.minhpvth08530.AuthSession;
 import dao.longdtta00178.SalesInvoiceDAO;
 import dao.longdtta00178.SalesOrderDAO;
@@ -31,9 +32,10 @@ import models.longdtta00178.SalesInvoice;
 public class SalesInvoiceController extends HttpServlet {
 
     private static final String PERM_CANCEL = "SALES_INVOICE_CANCEL";
-
+        private static final String PERM_EDIT = "SALES_INVOICE_EDIT";
     private final SalesInvoiceDAO dao = new SalesInvoiceDAO();
     private final SalesOrderDAO orderDao = new SalesOrderDAO();
+        private final SalesEditDAO editDao = new SalesEditDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -44,11 +46,16 @@ public class SalesInvoiceController extends HttpServlet {
                 writeList(req, resp);
             } else if ("methods".equals(action)) {
                 resp.getWriter().write(array(dao.findPaymentMethods()));
+                            } else if ("lot".equals(action)) {
+                // [155] tra mã lô khi sửa đơn (quét / gõ)
+                resp.getWriter().write(SalesJson.object(editDao.findLot(req.getParameter("code"))));
             } else {
                 writeDetail(req, resp, Long.parseLong(req.getParameter("id")));
             }
         } catch (NumberFormatException | java.time.format.DateTimeParseException e) {
             fail(resp, 400, "Tham số không hợp lệ");
+                    } catch (IllegalArgumentException e) {
+            fail(resp, 400, e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             fail(resp, 500, "Lỗi tải hóa đơn: " + e.getMessage());
@@ -79,6 +86,22 @@ public class SalesInvoiceController extends HttpServlet {
                 dao.cancelPaidOrder(invoiceId, userId, req.getParameter("reason"),
                         "true".equals(req.getParameter("restock")),
                         "true".equals(req.getParameter("refund")));
+                writeDetail(req, resp, invoiceId);
+                            } else if ("edit".equals(action)) {
+                // [155] lots = "lotId:soTui:soTuiQuetThem;..." (toàn bộ lô của đơn sau khi sửa)
+                List<SalesEditDAO.LotQty> target = new ArrayList<>();
+                String lots = req.getParameter("lots");
+                if (lots != null && !lots.isBlank()) {
+                    for (String item : lots.split(";")) {
+                        String[] f = item.split(":");
+                        target.add(new SalesEditDAO.LotQty(Long.parseLong(f[0]), Integer.parseInt(f[1]),
+                                f.length > 2 ? Integer.parseInt(f[2]) : 0));
+                    }
+                }
+                String cash = req.getParameter("cashGiven");
+                String digits = cash == null ? "" : cash.replaceAll("[^0-9]", "");
+                editDao.saveEdit(invoiceId, userId, isOwnerEditor(req), target,
+                        digits.isEmpty() ? null : new java.math.BigDecimal(digits), req.getParameter("reason"));
                 writeDetail(req, resp, invoiceId);
             } else {
                 fail(resp, 400, "Thao tác không hợp lệ: " + action);
@@ -120,9 +143,18 @@ public class SalesInvoiceController extends HttpServlet {
         }
         String order = SalesJson.order(invoice, orderDao.findLines(invoiceId),
                 orderDao.findPayments(invoiceId), orderDao.findAllocations(invoiceId));
+                Integer userId = AuthSession.userId(req);
+        Map<String, Object> edit = userId == null ? Map.of("canEdit", false)
+                : editDao.editPermission(invoiceId, userId, isOwnerEditor(req));
         resp.getWriter().write("{\"order\":" + order
                 + ",\"extra\":" + SalesJson.object(dao.findExtra(invoiceId))
+                + ",\"edit\":" + SalesJson.object(new java.util.LinkedHashMap<>(edit))
                 + ",\"canCancel\":" + canCancel(req) + "}");
+    }
+
+    /** Có quyền SALES_INVOICE_EDIT (chủ): sửa mọi đơn, không giới hạn thời gian */
+    private static boolean isOwnerEditor(HttpServletRequest req) {
+        return AuthSession.can(AuthSession.current(req), PERM_EDIT);
     }
 
     private static boolean canCancel(HttpServletRequest req) {

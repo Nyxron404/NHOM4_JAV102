@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Báo cáo & Thống kê - Cà phê Đặc sản</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .container { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #6f4e37; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kpi-card.warn { border-left-color: #dc2626; }
+        .kpi-title { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+        .kpi-value { font-size: 24px; font-weight: 700; color: #111827; }
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+        .badge-exp { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Báo cáo Tổng quan & Tồn kho Cận hạn</h2>
+
+    <!-- 3 thẻ KPI -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-title">Doanh thu hôm nay (PAID)</div>
+            <div class="kpi-value" id="kpiIncomeToday">0 đ</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">Chi phí nhập hàng tháng này</div>
+            <div class="kpi-value" id="kpiPurchaseMonth">0 đ</div>
+        </div>
+        <div class="kpi-card warn">
+            <div class="kpi-title">Số lô sắp hết hạn</div>
+            <div class="kpi-value" id="kpiNearExpiry">0 lô</div>
+        </div>
+    </div>
+
+    <!-- 2 bảng thống kê chi tiết -->
+    <div class="report-grid">
+        <div class="card">
+            <h3>Doanh thu theo Vùng trồng</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vùng trồng</th>
+                        <th>Doanh thu (VNĐ)</th>
+                    </tr>
+                </thead>
+                <tbody id="regionTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Danh sách Lô hàng Cận hạn</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã Lô</th>
+                        <th>Sản phẩm (SKU)</th>
+                        <th>Hạn sử dụng</th>
+                        <th>Tồn</th>
+                    </tr>
+                </thead>
+                <tbody id="nearExpiryTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="../../assets/js/shared.js"></script>
+<script src="../../assets/js/quangndth08631-bao-cao.js"></script>
+</body>
+</html>
