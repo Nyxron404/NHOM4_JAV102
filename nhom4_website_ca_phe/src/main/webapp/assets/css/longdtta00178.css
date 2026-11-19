@@ -1097,6 +1097,43 @@ select:focus {
     }
 }
 
+/* ===== VNPAY ===== */
+button.pay-method {
+    background-color: #FFFFFF;
+    font-size: inherit;
+    color: #2C1E16;
+    cursor: pointer;
+}
+
+button.pay-method:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+img.qr {
+    display: block;
+    padding: 8px;
+    object-fit: contain;
+    background-color: #FFFFFF;
+}
+
+.wait-fail {
+    color: #B42318;
+}
+
+/* Trang kết quả thanh toán */
+.result-box {
+    max-width: 460px;
+    margin: 40px auto;
+    padding: 30px;
+    text-align: center;
+}
+
+.result-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+}
+
 /* ===== MÀN NHỎ ===== */
 @media (max-width: 1100px) {
     .pos,
@@ -1109,4 +1146,17 @@ select:focus {
         width: 100%;
         position: static;
     }
+}
+
+/* ===== TRANG HÓA ĐƠN: dữ liệu thật ===== */
+#invRows tr[data-id] {
+    cursor: pointer;
+}
+
+.cancel-info {
+    margin: 10px 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: #FDECEA;
+    font-size: 13px;
 }

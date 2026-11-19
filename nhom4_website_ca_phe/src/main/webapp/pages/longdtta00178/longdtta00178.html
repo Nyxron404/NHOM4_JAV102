@@ -132,8 +132,8 @@
             <!-- Thanh toán: phương thức lấy từ payment_methods (is_active) -->
             <div class="pay">
               <div class="pay-methods">
-                <a href="#ban-hang" class="pay-method active">💵 Tiền mặt</a>
-                <a href="#modal-vnpay" class="pay-method">📱 VNPay (QR)</a>
+                                <span class="pay-method active">💵 Tiền mặt</span>
+                <button class="pay-method" id="btnVnpay" disabled>📱 VNPay (QR)</button>
               </div>
 
                             <!-- Tiền mặt (138): NV nhập tiền khách đưa, JS tính tiền thối -->
@@ -162,22 +162,23 @@
            =================================================================== -->
 
       <!-- QR VNPay (133, 160): QR cho số còn phải thu; nhận đủ tiền thì tự xác nhận đơn (139) -->
-      <div id="modal-vnpay" class="modal">
+            <div id="modal-vnpay" class="modal">
         <div class="modal-box">
           <div class="modal-head">
-            <span>Thanh toán VNPay · HD261118-0002</span>
+            <span id="vnpTitle">Thanh toán VNPay</span>
             <a href="#ban-hang" class="icon-btn">✕</a>
           </div>
           <div class="qr-wrap">
-            <div class="qr">Mã QR VNPay</div>
-            <div class="qr-amount">370.000đ</div>
-            <div class="muted">Mã giao dịch: HD261118-0002-1</div>
-            <div class="wait">⏳ Đang chờ khách quét mã… · hết hạn sau 14:52</div>
+            <img class="qr" id="vnpQr" alt="QR thanh toán" />
+            <div class="qr-amount" id="vnpAmount">0đ</div>
+            <div class="muted" id="vnpTxn"></div>
+            <div class="wait" id="vnpStatus">⏳ Đang chờ khách thanh toán…</div>
           </div>
-          <div class="hint">Khách chuyển đủ tiền: đơn tự xác nhận. Chuyển thiếu: thu phần còn lại bằng tiền mặt rồi bấm Xác nhận đơn.</div>
+          <div class="hint" id="vnpHint">Khách trả đủ tiền: đơn tự xác nhận và trừ kho.</div>
           <div class="modal-actions">
             <a href="#ban-hang" class="btn">Đóng</a>
-            <button class="btn">Tạo lại QR</button>
+            <button class="btn" id="btnVnpRenew">Tạo lại QR</button>
+            <a class="btn btn-primary" id="vnpOpen" href="#" target="_blank">Mở trang thanh toán</a>
           </div>
         </div>
       </div>
@@ -218,8 +219,9 @@
             <a href="#ban-hang" class="icon-btn">✕</a>
           </div>
           <div class="kv"><span>Tổng tiền</span><b id="confirmTotal">0đ</b></div>
-          <div class="kv"><span>Khách đưa (tiền mặt)</span><span id="confirmCash">0đ</span></div>
-          <div class="kv kv-change"><span>Tiền thối lại</span><span id="confirmChange">0đ</span></div>
+                    <div class="kv"><span>Thanh toán</span><span id="confirmMethod"></span></div>
+          <div class="kv" id="confirmCashRow"><span>Khách đưa (tiền mặt)</span><span id="confirmCash">0đ</span></div>
+          <div class="kv kv-change" id="confirmChangeRow"><span>Tiền thối lại</span><span id="confirmChange">0đ</span></div>
 
           <div class="section-title">Hệ thống đã trừ kho</div>
           <div id="confirmLots"></div>
@@ -250,6 +252,7 @@
             <div class="bill-line"></div>
             <div id="billItems"></div>
             <div class="bill-line"></div>
+                        <div id="billVat"></div>
             <div class="kv kv-total"><span>TỔNG CỘNG</span><span id="billTotal"></span></div>
             <div id="billPayments"></div>
             <div class="bill-line"></div>

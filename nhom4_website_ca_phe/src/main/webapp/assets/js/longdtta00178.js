@@ -482,6 +482,7 @@ function updatePayUI() {
     changeBox.parentElement.classList.toggle("kv-short", given > 0 && change < 0);
 
     document.getElementById("btnCancelOrder").disabled = !currentOrder;
+    document.getElementById("btnVnpay").disabled = !hasLines || due <= 0;
     document.getElementById("btnConfirm").disabled = !hasLines || (due > 0 && given < due);
 }
 
@@ -518,6 +519,11 @@ function showConfirmModal() {
     document.getElementById("confirmTotal").textContent = money(order.invoice.totalAmount);
     document.getElementById("confirmCash").textContent = money(cashGiven);
     document.getElementById("confirmChange").textContent = money(change);
+        document.getElementById("confirmMethod").textContent = order.payments
+        .filter(p => p.status === "SUCCESS" && p.paymentKind === "CHARGE")
+        .map(p => p.methodName).join(" + ");
+    document.getElementById("confirmCashRow").style.display = cashGiven > 0 ? "" : "none";
+    document.getElementById("confirmChangeRow").style.display = cashGiven > 0 ? "" : "none";
 
     const rows = order.allocations.map(a => `
         <tr>
@@ -569,6 +575,15 @@ async function cancelOrder() {
     }
 }
 
+/** Giá đã gồm VAT -> tách tiền chưa thuế + thuế theo invoice.vat_rate */
+function vatHtml(total) {
+    const rate = Number(storeInfo.vatRate || 0);
+    if (!rate) return "";
+    const beforeTax = Math.round(Number(total) / (1 + rate / 100));
+    return `<div class="kv"><span>Tiền hàng chưa thuế</span><span>${money(beforeTax)}</span></div>
+            <div class="kv"><span>Thuế GTGT ${rate}%</span><span>${money(Number(total) - beforeTax)}</span></div>`;
+}
+
 /* ---------- In hóa đơn ---------- */
 function showBill() {
     if (!lastConfirmed) return;
@@ -588,6 +603,7 @@ function showBill() {
           <div class="kv"><span>${l.quantity} x ${Number(l.unitPrice).toLocaleString("vi-VN")}</span>
             <span>${Number(l.lineAmount).toLocaleString("vi-VN")}</span></div>
         </div>`).join("");
+            document.getElementById("billVat").innerHTML = vatHtml(inv.totalAmount);
     document.getElementById("billTotal").textContent = money(inv.totalAmount);
 
     // Các khoản đã thu; tiền mặt thì in số khách đưa + tiền thối
@@ -641,6 +657,115 @@ function bindPayEvents() {
     document.getElementById("btnDoPrint").addEventListener("click", printBill);
 }
 
+/* =====================================================================
+   THANH TOÁN VNPAY (133 tạo QR, 160 theo dõi trạng thái)
+   Khách trả đủ -> máy chủ tự xác nhận đơn (139, 140, 142); màn này hỏi trạng thái mỗi 3 giây.
+   ===================================================================== */
+
+let vnpPayment = null;       // {paymentId, payUrl, amount, txnRef, expireMinutes, mock}
+let vnpPollTimer = null;
+let vnpCountdownTimer = null;
+
+async function openVnpay() {
+    if (!currentOrder || currentOrder.lines.length === 0) return;
+    try {
+        vnpPayment = await postOrder({ action: "vnpayCreate", invoiceId: currentOrder.invoice.salesInvoiceId });
+    } catch (error) {
+        showOrderMessage(error.message);
+        return;
+    }
+    showOrderMessage("");
+
+    document.getElementById("vnpTitle").textContent = "Thanh toán VNPay · " + vnpPayment.invoiceNo;
+    document.getElementById("vnpAmount").textContent = money(vnpPayment.amount);
+    document.getElementById("vnpTxn").textContent = "Mã giao dịch: " + vnpPayment.txnRef;
+    document.getElementById("vnpOpen").href = vnpPayment.payUrl;
+    // Ảnh QR chứa link thanh toán (dịch vụ tạo QR miễn phí, cần mạng)
+    document.getElementById("vnpQr").src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data="
+        + encodeURIComponent(vnpPayment.payUrl);
+    document.getElementById("vnpHint").textContent = vnpPayment.mock
+        ? "Đang dùng CỔNG GIẢ LẬP (chưa cấu hình mã VNPay). Bấm \"Mở trang thanh toán\" rồi chọn Thành công / Thất bại."
+        : "Khách trả đủ tiền: đơn tự xác nhận và trừ kho. Sandbox: trả bằng thẻ test NCB.";
+    setVnpStatus("⏳ Đang chờ khách thanh toán…", "");
+
+    location.hash = "#modal-vnpay";
+    startVnpayPolling();
+}
+
+function setVnpStatus(text, cssClass) {
+    const box = document.getElementById("vnpStatus");
+    box.textContent = text;
+    box.className = "wait " + cssClass;
+}
+
+function startVnpayPolling() {
+    stopVnpayPolling();
+    let secondsLeft = vnpPayment.expireMinutes * 60;
+
+    vnpCountdownTimer = setInterval(() => {
+        secondsLeft--;
+        const m = Math.floor(secondsLeft / 60), s = String(secondsLeft % 60).padStart(2, "0");
+        if (secondsLeft <= 0) {
+            stopVnpayPolling();
+            setVnpStatus("⌛ QR đã hết hạn, bấm Tạo lại QR", "wait-fail");
+            return;
+        }
+        if (document.getElementById("vnpStatus").className === "wait ") {
+            document.getElementById("vnpStatus").textContent = "⏳ Đang chờ khách thanh toán… · hết hạn sau " + m + ":" + s;
+        }
+    }, 1000);
+
+    vnpPollTimer = setInterval(checkVnpayStatus, 3000);
+}
+
+function stopVnpayPolling() {
+    clearInterval(vnpPollTimer);
+    clearInterval(vnpCountdownTimer);
+    vnpPollTimer = null;
+    vnpCountdownTimer = null;
+}
+
+async function checkVnpayStatus() {
+    if (!vnpPayment) return;
+    let status;
+    try {
+        status = await getJson(API_ORDER + "?action=paymentStatus&paymentId=" + vnpPayment.paymentId);
+    } catch (error) {
+        return;                                    // lỗi mạng tạm thời: lần sau hỏi lại
+    }
+
+    if (status.invoiceStatus === "PAID") {
+        // Đã thu đủ và hệ thống đã xác nhận đơn
+        stopVnpayPolling();
+        const order = await getJson(API_ORDER + "?id=" + status.salesInvoiceId);
+        lastConfirmed = { order: order, cashGiven: 0, change: 0 };
+        saveOrder(null);
+        showConfirmModal();
+        loadProducts();
+        loadOverview();
+    } else if (status.paymentStatus === "SUCCESS") {
+        // Đã nhận tiền nhưng chưa xác nhận được (VD hết tồn): giữ đơn để nhân viên xử lý
+        stopVnpayPolling();
+        setVnpStatus("✅ Đã nhận tiền VNPay nhưng chưa xác nhận được đơn. Kiểm tra số lượng rồi bấm Xác nhận đơn.", "wait-fail");
+        saveOrder(await getJson(API_ORDER + "?id=" + status.salesInvoiceId));
+    } else if (status.paymentStatus === "FAILED") {
+        stopVnpayPolling();
+        setVnpStatus("❌ Thanh toán không thành công (mã " + (status.responseCode || "?") + "). Tạo lại QR hoặc thu tiền mặt.", "wait-fail");
+    } else if (status.paymentStatus === "CANCELLED") {
+        stopVnpayPolling();
+        setVnpStatus("QR này đã bị hủy (đã tạo QR mới hoặc đơn bị hủy).", "wait-fail");
+    }
+}
+
+function bindVnpayEvents() {
+    document.getElementById("btnVnpay").addEventListener("click", openVnpay);
+    document.getElementById("btnVnpRenew").addEventListener("click", openVnpay);
+    // Đóng hộp thoại QR -> ngừng hỏi trạng thái (giao dịch vẫn chờ, mở lại sẽ tạo QR mới)
+    window.addEventListener("hashchange", () => {
+        if (location.hash !== "#modal-vnpay") stopVnpayPolling();
+    });
+}
+
 /* ---------- Khởi động ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
     bindFilters();
@@ -648,6 +773,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     bindPayEvents();
     loadCurrentOrder();
     loadOverview();
+    bindVnpayEvents();
     try {
         await loadFilterOptions();
     } catch (error) {

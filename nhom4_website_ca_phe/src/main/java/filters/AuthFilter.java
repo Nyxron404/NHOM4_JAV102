@@ -68,7 +68,12 @@ public class AuthFilter implements Filter {
         return path.equals(LOGIN_PAGE)
                 || path.startsWith("/assets/")
                 || path.equals("/api/auth")
-                || path.equals("/favicon.ico");
+                                || path.equals("/favicon.ico")
+                // VNPay: có kiểm chữ ký HMAC, không cần đăng nhập
+                || path.equals("/api/vnpay/ipn")
+                || path.equals("/api/vnpay/return")
+                || path.equals("/mock-vnpay/pay")
+                || path.equals("/pages/longdtta00178/vnpay-ket-qua.html");
     }
 
     private static boolean isManagerOnly(String path) {

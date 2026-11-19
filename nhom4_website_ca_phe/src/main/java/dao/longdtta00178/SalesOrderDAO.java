@@ -21,7 +21,7 @@ import models.enums.SalesInvoiceStatus;
 import models.longdtta00178.SalesInvoice;
 import models.longdtta00178.SalesInvoiceLine;
 import uri.DBConnect;
-
+import java.sql.Types;
 /**
  * Đơn đang lập ở màn bán hàng.
  * UC 130 tạo đơn, 132 thêm gói / đổi số lượng, 134 xóa gói, 136 giới hạn theo tồn còn hạn.
@@ -357,115 +357,11 @@ public class SalesOrderDAO {
        Tất cả trong 1 transaction: lỗi ở bất kỳ bước nào thì không ghi gì cả.
        cashGiven = tiền khách đưa (null nếu đã thu đủ bằng cách khác, VD VNPay).
        ========================================================= */
-    public void confirmOrder(long invoiceId, int userId, BigDecimal cashGiven) throws SQLException {
+        public void confirmOrder(long invoiceId, int userId, BigDecimal cashGiven) throws SQLException {
         try (Connection con = connect()) {
             con.setAutoCommit(false);
             try {
-                // 1. Khóa đơn để 2 máy không xác nhận cùng lúc, kiểm tra còn PENDING
-                try (PreparedStatement ps = con.prepareStatement(
-                        "SELECT status FROM sales_invoices WHERE sales_invoice_id = ? FOR UPDATE")) {
-                    ps.setLong(1, invoiceId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next()) throw new IllegalArgumentException("Không tìm thấy đơn");
-                        if (!"PENDING".equals(rs.getString(1))) {
-                            throw new IllegalArgumentException("Đơn đã xác nhận hoặc đã hủy");
-                        }
-                    }
-                }
-
-                // 2. Các dòng cần trừ (142.1)
-                List<long[]> lines = new ArrayList<>();          // {sales_line_id, package_id, quantity}
-                try (PreparedStatement ps = con.prepareStatement(
-                        "SELECT sales_line_id, package_id, quantity FROM sales_invoice_lines "
-                        + "WHERE sales_invoice_id = ? ORDER BY package_id")) {
-                    ps.setLong(1, invoiceId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            lines.add(new long[] {rs.getLong(1), rs.getLong(2), rs.getLong(3)});
-                        }
-                    }
-                }
-                if (lines.isEmpty()) throw new IllegalArgumentException("Đơn chưa có gói nào");
-
-                // 3. Thu tiền mặt phần còn thiếu (138). Ghi đúng số còn thiếu, phần dư là tiền thối.
-                BigDecimal due = dueAmount(con, invoiceId);
-                if (due.signum() > 0) {
-                    if (cashGiven == null || cashGiven.compareTo(due) < 0) {
-                        throw new IllegalArgumentException("Khách đưa chưa đủ, còn thiếu " + money(due));
-                    }
-                    String sqlPay = """
-                            INSERT INTO payments (sales_invoice_id, payment_method_id, amount, status,
-                                                  payment_kind, confirmed_by, paid_at)
-                            VALUES (?, (SELECT payment_method_id FROM payment_methods
-                                        WHERE method_code = 'CASH' AND is_active),
-                                    ?, 'SUCCESS', 'CHARGE', ?, now())
-                            """;
-                    try (PreparedStatement ps = con.prepareStatement(sqlPay)) {
-                        ps.setLong(1, invoiceId);
-                        ps.setBigDecimal(2, due);
-                        ps.setInt(3, userId);
-                        ps.executeUpdate();
-                    }
-                }
-
-                // 4. Trừ kho FEFO (142): mỗi dòng lấy dần từ lô còn hạn, hạn gần nhất trước
-                String sqlLots = """
-                        SELECT lo.lot_id, SUM(m.quantity_change) AS qty
-                        FROM lots lo
-                        JOIN purchase_invoice_lines pil ON pil.purchase_line_id = lo.purchase_line_id
-                        JOIN stock_movements m          ON m.lot_id = lo.lot_id
-                        WHERE pil.package_id = ?
-                          AND lo.expiry_date >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
-                        GROUP BY lo.lot_id, lo.expiry_date
-                        HAVING SUM(m.quantity_change) > 0
-                        ORDER BY lo.expiry_date, lo.lot_id
-                        """;
-                String sqlAlloc = "INSERT INTO sales_line_allocations (sales_line_id, lot_id, quantity) VALUES (?, ?, ?)";
-                String sqlMove = """
-                        INSERT INTO stock_movements (lot_id, movement_type, quantity_change, sales_invoice_id, performed_by)
-                        VALUES (?, 'SALE', ?, ?, ?)
-                        """;
-                for (long[] line : lines) {
-                    long lineId = line[0];
-                    int packageId = (int) line[1];
-                    int need = (int) line[2];
-
-                    try (PreparedStatement psLots = con.prepareStatement(sqlLots)) {
-                        psLots.setInt(1, packageId);
-                        try (ResultSet rs = psLots.executeQuery()) {
-                            while (rs.next() && need > 0) {
-                                long lotId = rs.getLong("lot_id");
-                                int take = Math.min(need, rs.getInt("qty"));
-                                try (PreparedStatement ps = con.prepareStatement(sqlAlloc)) {
-                                    ps.setLong(1, lineId);
-                                    ps.setLong(2, lotId);
-                                    ps.setInt(3, take);
-                                    ps.executeUpdate();
-                                }
-                                try (PreparedStatement ps = con.prepareStatement(sqlMove)) {
-                                    ps.setLong(1, lotId);
-                                    ps.setInt(2, -take);
-                                    ps.setLong(3, invoiceId);
-                                    ps.setInt(4, userId);
-                                    ps.executeUpdate();
-                                }
-                                need -= take;
-                            }
-                        }
-                    }
-                    if (need > 0) {
-                        throw new IllegalArgumentException("Gói " + packageName(con, packageId)
-                                + " không đủ tồn (thiếu " + need + " túi). Giảm số lượng rồi xác nhận lại.");
-                    }
-                }
-
-                // 5. Chuyển đơn sang đã xác nhận (140.1)
-                try (PreparedStatement ps = con.prepareStatement(
-                        "UPDATE sales_invoices SET status = 'PAID' WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
-                    ps.setLong(1, invoiceId);
-                    ps.executeUpdate();
-                }
-
+                confirmInTransaction(con, invoiceId, userId, cashGiven);
                 con.commit();
             } catch (SQLException | RuntimeException e) {
                 con.rollback();
@@ -475,6 +371,120 @@ public class SalesOrderDAO {
                 }
                 throw e;
             }
+        }
+    }
+
+    /**
+     * Các bước xác nhận đơn, chạy trong transaction do nơi gọi mở (không commit ở đây).
+     * Dùng chung cho: nhân viên bấm Xác nhận (tiền mặt) và VNPay báo thanh toán thành công.
+     * userId = null khi hệ thống tự xác nhận (VNPay).
+     */
+    public void confirmInTransaction(Connection con, long invoiceId, Integer userId, BigDecimal cashGiven)
+            throws SQLException {
+        // 1. Khóa đơn để 2 máy không xác nhận cùng lúc, kiểm tra còn PENDING
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT status FROM sales_invoices WHERE sales_invoice_id = ? FOR UPDATE")) {
+            ps.setLong(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) throw new IllegalArgumentException("Không tìm thấy đơn");
+                if (!"PENDING".equals(rs.getString(1))) {
+                    throw new IllegalArgumentException("Đơn đã xác nhận hoặc đã hủy");
+                }
+            }
+        }
+
+        // 2. Các dòng cần trừ (142.1)
+        List<long[]> lines = new ArrayList<>();          // {sales_line_id, package_id, quantity}
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT sales_line_id, package_id, quantity FROM sales_invoice_lines "
+                + "WHERE sales_invoice_id = ? ORDER BY package_id")) {
+            ps.setLong(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lines.add(new long[] {rs.getLong(1), rs.getLong(2), rs.getLong(3)});
+                }
+            }
+        }
+        if (lines.isEmpty()) throw new IllegalArgumentException("Đơn chưa có gói nào");
+
+        // 3. Thu tiền mặt phần còn thiếu (138). Ghi đúng số còn thiếu, phần dư là tiền thối.
+        BigDecimal due = dueAmount(con, invoiceId);
+        if (due.signum() > 0) {
+            if (cashGiven == null || cashGiven.compareTo(due) < 0) {
+                throw new IllegalArgumentException("Khách đưa chưa đủ, còn thiếu " + money(due));
+            }
+            if (userId == null) throw new IllegalArgumentException("Thu tiền mặt phải có nhân viên xác nhận");
+            String sqlPay = """
+                    INSERT INTO payments (sales_invoice_id, payment_method_id, amount, status,
+                                          payment_kind, confirmed_by, paid_at)
+                    VALUES (?, (SELECT payment_method_id FROM payment_methods
+                                WHERE method_code = 'CASH' AND is_active),
+                            ?, 'SUCCESS', 'CHARGE', ?, now())
+                    """;
+            try (PreparedStatement ps = con.prepareStatement(sqlPay)) {
+                ps.setLong(1, invoiceId);
+                ps.setBigDecimal(2, due);
+                ps.setInt(3, userId);
+                ps.executeUpdate();
+            }
+        }
+
+        // 4. Trừ kho FEFO (142): mỗi dòng lấy dần từ lô còn hạn, hạn gần nhất trước
+        String sqlLots = """
+                SELECT lo.lot_id, SUM(m.quantity_change) AS qty
+                FROM lots lo
+                JOIN purchase_invoice_lines pil ON pil.purchase_line_id = lo.purchase_line_id
+                JOIN stock_movements m          ON m.lot_id = lo.lot_id
+                WHERE pil.package_id = ?
+                  AND lo.expiry_date >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+                GROUP BY lo.lot_id, lo.expiry_date
+                HAVING SUM(m.quantity_change) > 0
+                ORDER BY lo.expiry_date, lo.lot_id
+                """;
+        String sqlAlloc = "INSERT INTO sales_line_allocations (sales_line_id, lot_id, quantity) VALUES (?, ?, ?)";
+        String sqlMove = """
+                INSERT INTO stock_movements (lot_id, movement_type, quantity_change, sales_invoice_id, performed_by)
+                VALUES (?, 'SALE', ?, ?, ?)
+                """;
+        for (long[] line : lines) {
+            long lineId = line[0];
+            int packageId = (int) line[1];
+            int need = (int) line[2];
+
+            try (PreparedStatement psLots = con.prepareStatement(sqlLots)) {
+                psLots.setInt(1, packageId);
+                try (ResultSet rs = psLots.executeQuery()) {
+                    while (rs.next() && need > 0) {
+                        long lotId = rs.getLong("lot_id");
+                        int take = Math.min(need, rs.getInt("qty"));
+                        try (PreparedStatement ps = con.prepareStatement(sqlAlloc)) {
+                            ps.setLong(1, lineId);
+                            ps.setLong(2, lotId);
+                            ps.setInt(3, take);
+                            ps.executeUpdate();
+                        }
+                        try (PreparedStatement ps = con.prepareStatement(sqlMove)) {
+                            ps.setLong(1, lotId);
+                            ps.setInt(2, -take);
+                            ps.setLong(3, invoiceId);
+                            ps.setObject(4, userId, Types.INTEGER);     // null = hệ thống
+                            ps.executeUpdate();
+                        }
+                        need -= take;
+                    }
+                }
+            }
+            if (need > 0) {
+                throw new IllegalArgumentException("Gói " + packageName(con, packageId)
+                        + " không đủ tồn (thiếu " + need + " túi). Giảm số lượng rồi xác nhận lại.");
+            }
+        }
+
+        // 5. Chuyển đơn sang đã xác nhận (140.1)
+        try (PreparedStatement ps = con.prepareStatement(
+                "UPDATE sales_invoices SET status = 'PAID' WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
+            ps.setLong(1, invoiceId);
+            ps.executeUpdate();
         }
     }
 
@@ -639,6 +649,78 @@ public class SalesOrderDAO {
                 return rs.getInt("qty");
             }
         }
+    }
+
+    /** Đã thu thực tế = thu - hoàn (giao dịch SUCCESS) */
+    private BigDecimal paidAmount(Connection con, long invoiceId) throws SQLException {
+        String sql = """
+                SELECT COALESCE(SUM(CASE WHEN payment_kind = 'CHARGE' THEN amount ELSE -amount END), 0)
+                FROM payments WHERE sales_invoice_id = ? AND status = 'SUCCESS'
+                """;
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getBigDecimal(1);
+            }
+        }
+    }
+
+    /** Còn phải thu = tổng tiền - đã thu (C8) */
+    private BigDecimal dueAmount(Connection con, long invoiceId) throws SQLException {
+        BigDecimal total;
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT COALESCE(SUM(quantity * unit_price), 0) FROM sales_invoice_lines WHERE sales_invoice_id = ?")) {
+            ps.setLong(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                total = rs.getBigDecimal(1);
+            }
+        }
+        return total.subtract(paidAmount(con, invoiceId));
+    }
+
+    private void writeAudit(Connection con, int userId, String action, long invoiceId, String reason) throws SQLException {
+        String sql = """
+                INSERT INTO audit_logs (user_id, action, entity_type, entity_id, detail)
+                VALUES (?, ?, 'sales_invoices', ?, CASE WHEN ? IS NULL THEN NULL ELSE jsonb_build_object('reason', ?) END)
+                """;
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, action);
+            ps.setLong(3, invoiceId);
+            ps.setString(4, reason);
+            ps.setString(5, reason);
+            ps.executeUpdate();
+        }
+    }
+
+    private String packageName(Connection con, int packageId) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("""
+                SELECT v.variant_name || ' ' || pk.weight_g || 'g' FROM packages pk
+                JOIN product_variants v ON v.variant_id = pk.variant_id WHERE pk.package_id = ?
+                """)) {
+            ps.setInt(1, packageId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : "#" + packageId;
+            }
+        }
+    }
+
+    private static String money(BigDecimal value) {
+        return String.format("%,.0fđ", value).replace(',', '.');
+    }
+
+    /** store_name -> storeName */
+    private static String toCamel(String key) {
+        StringBuilder sb = new StringBuilder();
+        boolean upper = false;
+        for (char c : key.toCharArray()) {
+            if (c == '_') { upper = true; continue; }
+            sb.append(upper ? Character.toUpperCase(c) : c);
+            upper = false;
+        }
+        return sb.toString();
     }
 
     private Connection connect() throws SQLException {

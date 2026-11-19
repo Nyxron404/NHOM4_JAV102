@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../../assets/css/shared.css" />
+    <link rel="stylesheet" href="../../assets/css/longdtta00178.css" />
+    <title>Kết quả thanh toán VNPay</title>
+  </head>
+  <body>
+    <!-- Trang VNPay chuyển khách về sau khi trả tiền (qua /api/vnpay/return).
+         Tham số: result = success | failed | invalid, txnRef, amount, code (vnp_ResponseCode) -->
+    <div class="page">
+      <div class="panel result-box">
+        <div class="result-icon" id="resultIcon">⏳</div>
+        <div class="hero-title" id="resultTitle">Đang xử lý…</div>
+        <div class="qr-amount" id="resultAmount"></div>
+        <div class="muted" id="resultTxn"></div>
+        <div class="hint" id="resultHint"></div>
+      </div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(location.search);
+      const result = params.get("result");
+      const amount = Number(params.get("amount") || 0);
+
+      const view = {
+        success: ["✅", "Thanh toán thành công", "Đơn đã được xác nhận tự động. Bạn có thể đóng tab này và quay lại màn bán hàng."],
+        failed: ["❌", "Thanh toán không thành công", "Mã lỗi VNPay: " + (params.get("code") || "") + ". Quay lại màn bán hàng để tạo lại QR hoặc thu tiền mặt."],
+        invalid: ["⚠️", "Sai chữ ký", "Dữ liệu trả về không hợp lệ, đơn KHÔNG được xác nhận. Báo chủ cửa hàng kiểm tra."]
+      }[result] || ["⚠️", "Không rõ kết quả", "Quay lại màn bán hàng để kiểm tra trạng thái đơn."];
+
+      document.getElementById("resultIcon").textContent = view[0];
+      document.getElementById("resultTitle").textContent = view[1];
+      document.getElementById("resultHint").textContent = view[2];
+      document.getElementById("resultAmount").textContent = amount ? amount.toLocaleString("vi-VN") + "đ" : "";
+      document.getElementById("resultTxn").textContent = "Mã giao dịch: " + (params.get("txnRef") || "");
+    </script>
+  </body>
+</html>

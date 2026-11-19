@@ -3,7 +3,9 @@ package controllers.longdtta00178;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
-
+import java.util.LinkedHashMap;
+import java.util.Map;
+import dao.longdtta00178.VnpayDAO;
 import dao.longdtta00178.SalesOrderDAO;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -32,13 +34,18 @@ import models.longdtta00178.SalesInvoice;
 public class SalesOrderController extends HttpServlet {
 
     private final SalesOrderDAO dao = new SalesOrderDAO();
-
+    private final VnpayDAO vnpayDao = new VnpayDAO();
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("application/json;charset=UTF-8");
         try {
             if ("overview".equals(req.getParameter("action"))) {
                 resp.getWriter().write(SalesJson.object(dao.findOverview()));
+                return;
+            }
+                        if ("paymentStatus".equals(req.getParameter("action"))) {
+                long paymentId = Long.parseLong(req.getParameter("paymentId"));
+                resp.getWriter().write(SalesJson.object(vnpayDao.findPaymentStatus(paymentId)));
                 return;
             }
             long invoiceId = Long.parseLong(req.getParameter("id"));
@@ -59,8 +66,11 @@ public class SalesOrderController extends HttpServlet {
             String action = req.getParameter("action");
             long invoiceId;
 
-            if ("create".equals(action)) {
+                        if ("create".equals(action)) {
                 invoiceId = dao.createInvoice(currentUserId(req));
+            } else if ("vnpayCreate".equals(action)) {
+                createVnpayPayment(req, resp, Long.parseLong(req.getParameter("invoiceId")));
+                return;                                      // trả thông tin QR, không trả đơn
             } else {
                 invoiceId = Long.parseLong(req.getParameter("invoiceId"));
                 if ("addPackage".equals(action)) {
@@ -95,6 +105,37 @@ public class SalesOrderController extends HttpServlet {
             e.printStackTrace();
             fail(resp, 500, "Lỗi xử lý đơn: " + e.getMessage());
         }
+    }
+
+        /**
+     * [133] Tạo giao dịch VNPay chờ thanh toán + link thanh toán đã ký.
+     * Trả: {paymentId, txnRef, amount, invoiceNo, payUrl, expireMinutes, mock}
+     */
+    private void createVnpayPayment(HttpServletRequest req, HttpServletResponse resp, long invoiceId)
+            throws IOException, SQLException {
+        Map<String, Object> payment = vnpayDao.createPayment(invoiceId);
+        BigDecimal amount = (BigDecimal) payment.get("amount");
+
+        Map<String, String> vnp = new LinkedHashMap<>();
+        vnp.put("vnp_Version", "2.1.0");
+        vnp.put("vnp_Command", "pay");
+        vnp.put("vnp_TmnCode", VnpayConfig.tmnCode());
+        vnp.put("vnp_Amount", amount.multiply(BigDecimal.valueOf(100)).toBigInteger().toString());   // x100
+        vnp.put("vnp_CurrCode", "VND");
+        vnp.put("vnp_TxnRef", (String) payment.get("txnRef"));
+        vnp.put("vnp_OrderInfo", "Thanh toan don " + payment.get("invoiceNo"));      // không dấu
+        vnp.put("vnp_OrderType", "other");
+        vnp.put("vnp_Locale", "vn");
+        vnp.put("vnp_ReturnUrl", VnpayConfig.returnUrl(req));
+        vnp.put("vnp_IpAddr", VnpayConfig.clientIp(req));
+        vnp.put("vnp_CreateDate", VnpayConfig.now());
+        vnp.put("vnp_ExpireDate", VnpayConfig.plusMinutes(VnpayConfig.EXPIRE_MINUTES));
+
+        Map<String, Object> result = new LinkedHashMap<>(payment);
+        result.put("payUrl", VnpayConfig.payUrl(req) + "?" + VnpayConfig.signedQuery(vnp));
+        result.put("expireMinutes", VnpayConfig.EXPIRE_MINUTES);
+        result.put("mock", VnpayConfig.isMock());
+        resp.getWriter().write(SalesJson.object(result));
     }
 
     /** Đọc lại đơn + dòng hàng + thanh toán + lô đã trừ rồi trả JSON */
