@@ -65,7 +65,7 @@ public class VnpayController extends HttpServlet {
             result = "failed";
         }
         String amount = params.getOrDefault("vnp_Amount", "0");
-        String url = req.getContextPath() + "/pages/longdtta00178/vnpay-ket-qua.html"
+        String url = req.getContextPath() + "/pages/longdtta00178/longdtta001783.html"
                 + "?result=" + result
                 + "&txnRef=" + URLEncoder.encode(params.getOrDefault("vnp_TxnRef", ""), StandardCharsets.UTF_8)
                 + "&amount=" + (amount.length() > 2 ? amount.substring(0, amount.length() - 2) : "0")

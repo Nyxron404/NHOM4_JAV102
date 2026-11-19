@@ -73,7 +73,7 @@ public class AuthFilter implements Filter {
                 || path.equals("/api/vnpay/ipn")
                 || path.equals("/api/vnpay/return")
                 || path.equals("/mock-vnpay/pay")
-                || path.equals("/pages/longdtta00178/vnpay-ket-qua.html");
+                || path.equals("/pages/longdtta00178/longdtta001783.html");
     }
 
     private static boolean isManagerOnly(String path) {
