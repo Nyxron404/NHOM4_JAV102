@@ -475,6 +475,7 @@ async function loadOverview() {
         document.getElementById("statPending").textContent = data.pendingCount;
                 document.getElementById("pendingBadge").textContent = data.pendingCount;
         storeInfo = data;
+        updatePayUI();
     } catch (error) {
         console.error("Không tải được chỉ số:", error);
     }
@@ -506,7 +507,9 @@ function updatePayUI() {
     changeBox.parentElement.classList.toggle("kv-short", given > 0 && change < 0);
 
     document.getElementById("btnCancelOrder").disabled = !currentOrder;
-    document.getElementById("btnVnpay").disabled = !hasLines || due <= 0;
+        const vnpayOff = storeInfo.vnpayActive === false;
+    document.getElementById("btnVnpay").disabled = !hasLines || due <= 0 || vnpayOff;
+    document.getElementById("btnVnpay").title = vnpayOff ? "VNPay đang tắt (trang Cấu hình)" : "";
     document.getElementById("btnConfirm").disabled = !hasLines || (due > 0 && given < due);
 }
 
@@ -616,7 +619,10 @@ function showBill() {
 
     document.getElementById("billStore").textContent = (storeInfo.storeName || "").toUpperCase();
     document.getElementById("billAddress").textContent = storeInfo.address || "";
-    document.getElementById("billPhone").textContent = storeInfo.phone ? "ĐT: " + storeInfo.phone : "";
+        document.getElementById("billPhone").textContent = [
+        storeInfo.phone ? "ĐT: " + storeInfo.phone : "",
+        storeInfo.taxCode ? "MST: " + storeInfo.taxCode : ""
+    ].filter(Boolean).join(" · ");
     document.getElementById("billNo").textContent = "Số: " + inv.invoiceNo;
     document.getElementById("billMeta").textContent =
         dateTimeText(new Date().toISOString()) + " · Thu ngân: " + (inv.cashierName || "");
@@ -897,7 +903,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     bindFilters();
     bindOrderEvents();
     bindPayEvents();
-    loadCurrentOrder();
+        // Đến từ trang cấu hình (?open=id): mở đơn chờ đó
+    const openId = new URLSearchParams(location.search).get("open");
+    loadCurrentOrder().then(() => {
+        if (openId) {
+            history.replaceState(null, "", location.pathname);
+            openPendingOrder(Number(openId));
+        }
+    });
     loadOverview();
     bindVnpayEvents();
         bindPendingEvents();

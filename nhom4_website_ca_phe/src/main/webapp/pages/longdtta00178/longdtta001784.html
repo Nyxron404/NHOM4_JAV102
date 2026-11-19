@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../../assets/css/shared.css?v=20261120a" />
+    <link rel="stylesheet" href="../../assets/css/longdtta00178.css?v=20261120a" />
+    <title>Cấu hình bán hàng</title>
+  </head>
+  <body>
+    <div id="header"></div>
+
+    <!--
+      TRANG CẤU HÌNH BÁN HÀNG (longdtta00178), chỉ chủ cửa hàng (quyền SALES_CONFIG)
+      UC 159 lưu + 164 xem thông tin hóa đơn · 163 bật/tắt phương thức thanh toán · 162 thanh toán ngoại lệ
+      Dữ liệu: ../../api/cau-hinh-ban-hang (assets/js/longdtta001784.js)
+    -->
+    <div class="page">
+      <div class="page-hero">
+        <div class="hero-icon">⚙️</div>
+        <div class="hero-text">
+          <div class="hero-title">Cấu hình bán hàng</div>
+          <div class="hero-sub">Thông tin in trên hóa đơn, phương thức thanh toán và giao dịch cần xử lý</div>
+        </div>
+      </div>
+      <div class="page-nav">
+        <a href="../../index.html" class="nav-btn">🏠 Trang chủ</a>
+        <a href="longdtta00178.html" class="nav-btn">🛒 Bán hàng</a>
+        <a href="longdtta001782.html" class="nav-btn">🧾 Hóa đơn</a>
+      </div>
+
+      <div class="order-msg" id="pageMsg"></div>
+
+      <div class="config-layout" id="configBox" style="display: none">
+        <!-- [159] [164] Thông tin hóa đơn -->
+        <div class="panel">
+          <div class="section-title">Thông tin in trên hóa đơn</div>
+          <div id="settingFields"></div>
+          <div class="muted" id="settingUpdated"></div>
+          <div class="hint">Giá bán đã gồm thuế GTGT. Hóa đơn tách dòng "Tiền hàng chưa thuế" và "Thuế GTGT" theo thuế suất này (để 0 = không tách).</div>
+          <div class="order-msg" id="settingMsg"></div>
+          <div class="modal-actions">
+            <button class="btn" id="btnResetSettings">Hoàn tác</button>
+            <button class="btn btn-primary" id="btnSaveSettings">Lưu thông tin</button>
+          </div>
+        </div>
+
+        <div>
+          <!-- [163] Phương thức thanh toán -->
+          <div class="panel">
+            <div class="section-title">Phương thức thanh toán</div>
+            <div id="methodList"></div>
+            <div class="hint">Tắt VNPay: màn bán hàng không tạo được QR mới. Tiền mặt luôn bật để thu và hoàn tiền.</div>
+          </div>
+
+          <!-- Xem trước đầu hóa đơn -->
+          <div class="panel">
+            <div class="section-title">Xem trước đầu hóa đơn</div>
+            <div class="bill bill-preview">
+              <div class="bill-center">
+                <div class="bill-store" id="pvStore"></div>
+                <div id="pvAddress"></div>
+                <div id="pvPhone"></div>
+                <div id="pvTax"></div>
+                <div class="bill-title">HÓA ĐƠN BÁN HÀNG</div>
+              </div>
+              <div class="bill-line"></div>
+              <div id="pvVat"></div>
+              <div class="kv kv-total"><span>TỔNG CỘNG</span><span>108.000đ</span></div>
+              <div class="bill-line"></div>
+              <div class="bill-center" id="pvFooter"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [162] Thanh toán ngoại lệ -->
+      <div class="panel" id="exceptionBox" style="display: none">
+        <div class="list-head">
+          <span class="section-title">Giao dịch cần xử lý <span class="count-badge" id="exceptionCount">0</span></span>
+          <button class="btn btn-sm" id="btnReload">↻ Tải lại</button>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Đơn</th>
+              <th>Giao dịch</th>
+              <th class="num">Số tiền</th>
+              <th>Tình trạng</th>
+              <th>Xử lý</th>
+            </tr>
+          </thead>
+          <tbody id="exceptionRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="../../assets/js/shared.js?v=20261120a"></script>
+    <script src="../../assets/js/longdtta001784.js?v=20261120a"></script>
+  </body>
+</html>

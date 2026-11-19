@@ -486,6 +486,13 @@ public class SalesOrderDAO {
             ps.setLong(1, invoiceId);
             ps.executeUpdate();
         }
+        
+        // 6. QR VNPay còn chờ của đơn (khách đổi sang trả tiền mặt) -> hủy, tránh treo giao dịch
+        try (PreparedStatement ps = con.prepareStatement(
+                "UPDATE payments SET status = 'CANCELLED' WHERE sales_invoice_id = ? AND status = 'PENDING'")) {
+            ps.setLong(1, invoiceId);
+            ps.executeUpdate();
+        }
     }
 
     /* =========================================================
@@ -588,6 +595,13 @@ public class SalesOrderDAO {
                  ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 result.put("pendingCount", rs.getInt(1));
+            }
+                        // VNPay đang bật? (trang cấu hình 163) -> màn bán hàng khóa nút QR khi tắt
+            try (PreparedStatement ps = con.prepareStatement(
+                    "SELECT COALESCE(bool_or(is_active), false) FROM payment_methods WHERE method_code = 'VNPAY'");
+                 ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                result.put("vnpayActive", rs.getBoolean(1));
             }
             // Thông tin in trên hóa đơn (C6)
             try (PreparedStatement ps = con.prepareStatement(
