@@ -177,6 +177,19 @@ public class ProductDAO {
         }
     }
 
+    /**
+     * Tạo lại mã QR cho sản phẩm: sinh qr_token mới, link/QR cũ sẽ hết hiệu lực.
+     * @return token mới, null nếu không có sản phẩm này
+     */
+    public String regenerateQrToken(int productId) throws SQLException {
+        String token = newQrToken();
+        try (Connection connection = DaoSupport.openConnection()) {
+            int rows = DaoSupport.update(connection,
+                    "UPDATE products SET qr_token = ? WHERE product_id = ?", token, productId);
+            return rows == 1 ? token : null;
+        }
+    }
+
     private static String newQrToken() {
         byte[] bytes = new byte[16];
         RANDOM.nextBytes(bytes);

@@ -16,6 +16,7 @@ import java.util.Map;
  * GET  /api/products?keyword=&amp;status=        danh sách / tìm kiếm / lọc (UC51, UC52, UC53)
  * GET  /api/products?id=                         chi tiết + biến thể (UC54)
  * POST /api/products action=create|update|delete|deactivate|activate  (UC55..UC58)
+ * POST /api/products action=regenerate-qr &amp;id=      tạo lại qr_token (trang qr.html)
  * </pre>
  */
 @WebServlet("/api/products")
@@ -65,6 +66,11 @@ public class ProductController extends BaseController {
                 found(productDAO.activate(requiredInt(request, "id", "mã sản phẩm")),
                         "sản phẩm đã ngừng kinh doanh");
                 return ok("Sản phẩm đã kinh doanh trở lại");
+            }
+            case "regenerate-qr" -> {
+                String token = found(productDAO.regenerateQrToken(
+                        requiredInt(request, "id", "mã sản phẩm")), "sản phẩm");
+                return ok("Đã tạo lại mã QR, mã QR cũ không còn dùng được", "qrToken", token);
             }
             default -> throw new IllegalArgumentException("Thao tác không hợp lệ: " + action);
         }
