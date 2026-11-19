@@ -289,6 +289,25 @@ public class SalesLotDAO {
             }
         }
 
+        // 2b. Khóa phiếu [BAN_AM] đang chờ của các lô TRƯỚC khi khóa lô — cùng thứ tự với
+        //     StockCountDAO.approve (phiếu -> lô). Không khóa thì chủ duyệt đúng lúc quầy đang bán âm
+        //     sẽ cộng theo số "tồn hệ thống" cũ: duyệt xong lô vẫn âm mà không còn phiếu chờ.
+        if (!needs.isEmpty()) {
+            try (PreparedStatement ps = con.prepareStatement("""
+                    SELECT c.stock_count_id
+                    FROM stock_counts c
+                    JOIN stock_count_lines cl ON cl.stock_count_id = c.stock_count_id
+                    WHERE cl.lot_id = ANY (?) AND c.count_type = 'ADJUSTMENT'
+                      AND c.status = 'PENDING' AND c.note LIKE ?
+                    ORDER BY c.stock_count_id
+                    FOR UPDATE OF c
+                    """)) {
+                ps.setArray(1, con.createArrayOf("bigint", needs.stream().map(LotNeed::lotId).toArray()));
+                ps.setString(2, NEGATIVE_NOTE + "%");
+                ps.executeQuery().close();
+            }
+        }
+
         // 3. Kiểm tra hạn + tồn; phần vượt tồn phải là túi đã quét
         LocalDate today = LocalDate.now(VIETNAM);
         Set<Long> negativeLots = new LinkedHashSet<>();
